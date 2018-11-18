@@ -3,61 +3,75 @@ import psycopg2
 
 class Database(object):
     """class for the database"""
-    DATABASE_URL = "postgresql://postgres:crycetruly@localhost:5432/sendit"
+    DB_CONNECTION_STR = "dbname='postgres' user='postgres' host='localhost' password='crycetruly' port='5432'"
 
     def __init__(self):
         """initialize  connection """
         try:
-            self.connection = psycopg2.connect(
-                str(self.DATABASE_URL))
-
+            """
+            creates a db
+            """
+            self.connection = psycopg2.connect(dbname="sendit", user="postgres", password="crycetruly")
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
-
+            self.create_tables()
         except(Exception, psycopg2.DatabaseError) as e:
-            print(e)
+            print('There was an error' + str(e))
 
     def create_tables(self):
+
         """ create tables """
         create_table = """CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, username VARCHAR(30),
-            email VARCHAR(100),password VARCHAR(150), phone_number VARCHAR(100),
-            is_admin BOOLEAN DEFAULT FALSE ,joined  DEFAULT CURRENT_TIMESTAMP )"""
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30),
+            email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),
+            is_admin BOOLEAN DEFAULT FALSE ,joined DATE DEFAULT CURRENT_TIMESTAMP )"""
         self.cursor.execute(create_table)
+        self.connection.commit()
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
-            parcel_id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
-            destination_address VARCHAR(500) NOT NULL,pickup_address VARCHAR (255),comment_description VARCHAR (500),sender_email VARCHAR (255)
-            status VARCHAR (25),recipient_name VARCHAR (255),weight INTEGER ,current_location VARCHAR (255),recipient_email VARCHAR (255),recipient_phone VARCHAR (255),
-            created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP , FOREIGN KEY(user_id)
-            REFERENCES users(user_id) ON UPDATE CASCADE ON DELETE CASCADE,
-            FOREIGN KEY(sender_email) REFERENCES users(email) ON UPDATE CASCADE ON
-            DELETE CASCADE)"""
+            parcel_id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(user_id),
+            destination_address VARCHAR(500) NOT NULL,
+            pickup_address VARCHAR (255),
+            comment_description VARCHAR (500),
+            sender_email VARCHAR (255),
+            status VARCHAR (25),
+            recipient_name VARCHAR (255),
+            weight INTEGER ,
+            current_location VARCHAR (255),
+            recipient_email VARCHAR (255),
+            recipient_phone VARCHAR (255),
+            pickplatlng TEXT,
+            destlatlng TEXT ,
+            distance DOUBLE PRECISION,
+            price DOUBLE PRECISION,
+            created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
         self.cursor.execute(create_table)
+        self.connection.commit()
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
         Query to add a new user
         :admin,user
         """
-        user = """INSERT INTO users
-                (fullname, username,email, phone_number, password)
-                VALUES ('{}','{}','{}','{}');
+        user = """INSERT INTO users(full_name, username,email, phone_number,password)
+                VALUES ('{}','{}','{}','{}','{}');
                 """.format(fullname, username, email, phone_number, password)
         self.cursor.execute(user)
         self.connection.commit()
 
-    def insert_into_parcels(
-            self, user_id, menu_id, meal, description, price, status
-    ):
+    def insert_into_parcels(self, destination_address, pickup_address, comment_description, user_id, sender_email,
+                            recipient_phone, recipient_email, recipient_name, weight, latlng, destlatlng, distance,
+                            price):
         """
-        Query to add parcel order to the database : user
+        Query to add parcel order to the database : by user
         """
         order_query = """INSERT INTO parcels(destination_address, pickup_address, comment_description,
                      user_id, sender_email, recipient_phone,
-                     recipient_email, recipient_name, weight)
+                     recipient_email, recipient_name, weight,pickplatlng,destlatlng,distance,price)
                     VALUES('{}','{}','{}','{}','{}','{}'); """.format(
-            user_id, menu_id, meal, description, price, status)
+            destination_address, pickup_address, comment_description, user_id, sender_email, recipient_phone,
+            recipient_email, recipient_name, weight, latlng, destlatlng, distance, price)
         self.cursor.execute(order_query)
         self.connection.commit()
 
@@ -92,6 +106,16 @@ class Database(object):
         results = self.cursor.fetchone()
         return results
 
+    def get_user_by_value(self, table_name, column, value):
+        """
+        Function  gets items from the
+        same table with similar email :email
+        """
+        query = "SELECT * FROM {} WHERE {} = '{}';".format(table_name, column, value)
+        self.cursor.execute(query)
+        results = self.cursor.fetchone()
+        return results
+
     def get_user_parcels(self, user_id):
         """
         Select from parcels where parcel.user_id = user.user_id
@@ -119,14 +143,24 @@ class Database(object):
             return "status updated successfully"
         return "Invalid status name"
 
+    def is_order_delivered(self, id):
+        sql = "SELECT status FROM parcels WHERE id ='{}'".format(id)
+        self.cursor.execute(sql)
+        self.connection.commit()
+        order = self.cursor.fetchone()
+        status = order[0]
+        if status == 'delivered':
+            return True
+        return False
+
     def update_role(self, role, email):
         query = """UPDATE users SET role = '{}'
                 WHERE email ='{}' """.format(role, email)
         self.cursor.execute(query)
         self.connection.commit()
 
-    def change_destination(self,table_name,column,new_value,parcel_id):
-        query="UPDATE {} SET {} = '{}' WHERE parcel_id ={};".format(table_name,column,new_value,parcel_id)
+    def change_destination(self, table_name, column, new_value, parcel_id):
+        query = "UPDATE {} SET {} = '{}' WHERE parcel_id ={};".format(table_name, column, new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
 
@@ -136,11 +170,25 @@ class Database(object):
         self.cursor.execute(delete_query)
         self.connection.commit()
 
-    def change_present_location(self,table,column,location,parcel_id):
+    def change_present_location(self, table, column, location, parcel_id):
         query = "UPDATE {} SET {} = '{}' WHERE parcel_id ={};".format(table, column, location, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
 
+    def cancel_parcel(self, id):
+        sql = "UPDATE parcels SET status='{}' WHERE parcel_id = '{}'".format('cancelled', id)
+        self.cursor.execute(sql)
+        self.connection.commit()
+        return self.get_parcel_by_value('parcels', 'parcel_id', id)
+
+    def is_parcel_owner(self, parcel_id, user_id):
+        sql = "SELECT user_id FROM parcels WHERE user_id ='{}'".format(user_id)
+        self.cursor.execute(sql)
+        self.connection.commit()
+        order = self.cursor.fetchone()
+        if len(order) == 1:
+            return True
+        return False
 
     def drop_tables(self):
         drop_query = "DROP TABLE IF EXISTS {0} CASCADE"
