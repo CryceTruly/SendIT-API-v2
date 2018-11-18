@@ -2,17 +2,16 @@ import geopy.distance
 import requests
 import os
 
+from app.auth.decorator import response_message
 from app.database.database import Database
-from app.model.models import Parcel
 
 
 class Helper:
     def __init__(self):
         self.base_price = 2
         self.trulyKey = os.environ.get('trulysKey')
-        db=Database()
-        self.parcels=db.get_all_parcels()
-
+        db = Database()
+        self.parcels = db.get_all_parcels()
 
     def is_valid_request(self, request_data):
         """
@@ -24,9 +23,13 @@ class Helper:
         keys = ["destination_address", "pickup_address", "comment_description",
                 "user_id", "sender_email", "recipient_phone",
                 "recipient_email", "status", "recipient_name", "weight", "current_location"]
-        if set(request_data).issubset(keys):
-            return True
-        return False
+        try:
+
+            if set(request_data).issubset(keys):
+                return True
+            return False
+        except KeyError as keyerr:
+            return response_message('Failed', str(keyerr) + 'is missing', 400)
 
     def is_order_delivered(self, id):
         """
@@ -101,4 +104,3 @@ class Helper:
             if p['user_id'] == user_id:
                 return True
         return False
-
