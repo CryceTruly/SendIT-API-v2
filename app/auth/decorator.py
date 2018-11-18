@@ -51,28 +51,28 @@ def role_required():
     return user_role
 
 
-def response(id, username,fullname, message, token, status_code):
+def response(id, username,message, token, status_code):
     """
     method to make http response for authorization token
     """
-    return {
-        "id": id,
-        "fullname":fullname,
+    return jsonify({
+        "user_id": id,
         "username": username,
         "message": message,
         "auth_token": token
 
-    }, status_code
+
+    }), status_code
 
 
 def response_message(status, message, status_code):
     """
     method to handle response messages
     """
-    return {
+    return jsonify({
         "status": status,
         "message": message
-        }, status_code
+        }), status_code
 
 
 

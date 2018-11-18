@@ -13,7 +13,7 @@ auth = Blueprint('auth', __name__)
 db = Database()
 
 
-@auth.route('/api/v2/users', methods=['GET'])
+@auth.route('/api/v2/auth/signup', methods=['POST'])
 @swag_from('../doc/signup.yml')
 def create_user():
     """
@@ -30,39 +30,49 @@ def create_user():
         username = detail['username']
         email = detail['email']
         phone_number = detail['phone_number']
+        if len(str(phone_number)) < 9:
+            return response_message('Invalid', 'Phone Number should be atleast 10 characters', 400)
+        if not re.match("[0-9]", phone_number):
+            return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
+
         fullname = detail['fullname']
         if not fullname:
             return response_message('Missing', 'FullName is required', 400)
+        if len(fullname) < 2:
+            return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
+
+        if len(username) < 4:
+            return response_message('Invalid', 'UserName  should be atleaset 4 characters long', 400)
         password = generate_password_hash(detail['password'])
 
         if not username:
             return response_message('Missing', 'Username required', 400)
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return response_message(
-                'Error', 'Missing or wrong email format', 202)
+                'Error', 'Missing or wrong email format', 400)
         if not len(detail['password']) > 5:
             return response_message(
-                'Failed', 'Ensure password is atleast characters', 202)
+                'Failed', 'Ensure password is atleast 6 characters', 400)
         if not isinstance(username, str):
             return response_message(
-                'Type Error', 'username must all be string', 202)
+                'Type Error', 'username must all be string', 400)
         if not re.match("^[a-zA-Z0-9_.-]+$", username):
             return response_message(
                 'Space Error', 'Username should not have a whitespace, better user _',
                 400)
-        if db.get_user_by_email('users', email):
+        if db.get_user_by_value('users', 'email', email):
             return response_message(
-                'Failed', 'User with email ' + email + ' already eexists', 409)
+                'Failed', 'User with email ' + email + ' already exists', 409)
+        if db.get_user_by_value('users', 'username', username):
+            return response_message(
+                'Failed', 'User with Username ' + username + ' already exists', 409)
         db.insert_into_user(fullname, username, email, phone_number, password)
-        if detail['role']:
-            db.update_role(detail['role'], email)
-        return response_message(
-            'Success', 'User account successfully created, you can now login', 201)
+        return response_message('Success', 'User account successfully created, you can now login', 201)
     except KeyError as e:
         return {'KeyError': str(e)}
 
 
-@auth.route('/api/v2/users/auth', methods=['POST'])
+@auth.route('/api/v2/auth/login', methods=['POST'])
 @swag_from('../doc/login.yml')
 def login_user():
     """
@@ -77,45 +87,46 @@ def login_user():
         if not detail:
             return {"Failed": "Empty request"}, 400
         username = detail['username']
-        password = generate_password_hash(detail['password'])
+        password = detail['password']
         if not username and not password:
             return response_message(
                 'Failed', 'Username and password are required', 400)
-        db_user = db.get_user_by_username('users', username)
+        db_user = db.get_user_by_value('users','username', username)
         if not db_user:
             return response_message(
                 'Failed', 'incorrect username', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
-        if new_user.username == detail['username'] and check_password_hash(
-                new_user.password, detail['password']):
-            payload = {
-                'email': new_user.email,
-                'exp': datetime.datetime.utcnow() +
-                       datetime.timedelta(days=0, hours=23),
-                'iat': datetime.datetime.utcnow(),
-                'sub': new_user.user_id,
-                'role': new_user.role
-            }
-            token = jwt.encode(
-                payload,
-                'mysecret',
-                algorithm='HS256'
-            )
-            if token:
-                return response(
-                    new_user.user_id, new_user.username,
-                    'You have successfully logged in.',
-                    token.decode('UTF-8'), 200)
-        return response_message(
-            'Failed', 'incorrect password', 401)
+        if not check_password_hash(new_user.password,password):
+            return response_message('failed','wrong password',401)
+        payload = {
+            'email': new_user.email,
+            'exp': datetime.datetime.utcnow() +
+                   datetime.timedelta(days=0, hours=23),
+            'iat': datetime.datetime.utcnow(),
+            'sub': new_user.user_id,
+            'user_name':new_user.username,
+            'is_admin': new_user.is_admin
+        }
+        token = jwt.encode(
+            payload,
+            'trulysSecret',
+            algorithm='HS256'
+        )
+        if token:
+            return response(
+                new_user.user_id, new_user.username,
+                'You have successfully logged in.',
+                token.decode('UTF-8'), 200)
+
+
     except KeyError as e:
         return ({'KeyError': str(e)})
 
 
 @auth.route('/api/v2/users', methods=['GET'])
-def get_user():
+def get_users():
     users = Database().get_users()
     user_list = []
     for user in users:
@@ -124,8 +135,24 @@ def get_user():
             "fullname": user[1],
             "username": user[2],
             "email": user[3],
-            "phone_number": user[4],
-            "role": user[5]
+            "phone_number": user[5],
+            "is_admin": user[6],
+            "joined": user[7]
         }
         user_list.append(user_dict)
-    return ({"users": user_list}), 200
+    return jsonify({"users": user_list}), 200
+
+
+@auth.route('/api/v2/users/<int:id>/parcels',methods=['GET'])
+def get_user_parcels(id):
+    """
+    returns parcel requests created by a user given the users id
+    """
+    if not db.get_user_by_value('users', 'user_id', id) is None:
+        return jsonify({'user_parcels':db.get_user_parcels(id)})
+    else:
+        return jsonify({"msg": 'User does not exist'}), 404
+
+
+
+
