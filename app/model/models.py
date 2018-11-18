@@ -5,12 +5,13 @@ import datetime
 class User:
     """ user class """
 
-    def __init__(self, user_id, username, email, phone_number, password, role):
+    def __init__(self, user_id, username, email, phone_number, password, is_admin):
         self.user_id = user_id
         self.username = username
+        self.phone_number=phone_number,
         self.email = email
         self.password = password
-        self.role = role
+        self.is_admin = is_admin
         self.joined = datetime.datetime.now()
 
     def __str__(self):
