@@ -1,5 +1,7 @@
 import psycopg2
 
+from app.auth.decorator import response_message
+
 
 class Database(object):
     """class for the database"""
@@ -45,7 +47,7 @@ class Database(object):
             destlatlng TEXT ,
             distance DOUBLE PRECISION,
             price DOUBLE PRECISION,
-            created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
+            created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,last_modified DATE DEFAULT CURRENT_TIMESTAMP)"""
         self.cursor.execute(create_table)
         self.connection.commit()
 
@@ -69,11 +71,12 @@ class Database(object):
         order_query = """INSERT INTO parcels(destination_address, pickup_address, comment_description,
                      user_id, sender_email, recipient_phone,
                      recipient_email, recipient_name, weight,pickplatlng,destlatlng,distance,price)
-                    VALUES('{}','{}','{}','{}','{}','{}'); """.format(
+                    VALUES('{}','{}','{}','{}','{}','{}','{}','{}',{},'{}','{}',{},{}); """.format(
             destination_address, pickup_address, comment_description, user_id, sender_email, recipient_phone,
-            recipient_email, recipient_name, weight, latlng, destlatlng, distance, price)
+            recipient_email, recipient_name, weight, str(24), str(24), distance, price)
         self.cursor.execute(order_query)
         self.connection.commit()
+
 
     def get_all_parcels(self):
         """
@@ -87,6 +90,7 @@ class Database(object):
             parcel_list.append(parcel)
         return parcel_list
 
+
     def get_users(self):
         self.cursor.execute("SELECT * FROM users")
         users = self.cursor.fetchall()
@@ -95,16 +99,22 @@ class Database(object):
             user_list.append(user)
         return user_list
 
+
     def get_parcel_by_value(self, table_name, table_column, value):
         """
         Function  gets items from the
         same table with similar ids :admin
         """
-        query = "SELECT * FROM {} WHERE {} = '{}';".format(
-            table_name, table_column, value)
-        self.cursor.execute(query)
-        results = self.cursor.fetchone()
-        return results
+        try:
+
+            query = "SELECT * FROM {} WHERE {} = '{}';".format(
+                table_name, table_column, value)
+            self.cursor.execute(query)
+            results = self.cursor.fetchone()
+            return results
+        except Exception as e:
+            return None
+
 
     def get_user_by_value(self, table_name, column, value):
         """
@@ -115,6 +125,7 @@ class Database(object):
         self.cursor.execute(query)
         results = self.cursor.fetchone()
         return results
+
 
     def get_user_parcels(self, user_id):
         """
@@ -128,6 +139,7 @@ class Database(object):
             return results
         return "No parcels yet"
 
+
     def update_parcel_status(self, stat, id):
         """
         update table parcels set status ='' where parcel_id = id
@@ -137,11 +149,12 @@ class Database(object):
         status = ['pickup_started', 'in_transit', 'cancelled', 'delivered']
         if stat in status:
             query = """UPDATE parcels SET status = '{}'
-                    WHERE parcel_id ='{}' """.format(stat, id)
+                        WHERE parcel_id ='{}' """.format(stat, id)
             self.cursor.execute(query)
             self.connection.commit()
             return "status updated successfully"
         return "Invalid status name"
+
 
     def is_order_delivered(self, id):
         sql = "SELECT status FROM parcels WHERE id ='{}'".format(id)
@@ -153,16 +166,19 @@ class Database(object):
             return True
         return False
 
+
     def update_role(self, role, email):
         query = """UPDATE users SET role = '{}'
-                WHERE email ='{}' """.format(role, email)
+                    WHERE email ='{}' """.format(role, email)
         self.cursor.execute(query)
         self.connection.commit()
+
 
     def change_destination(self, table_name, column, new_value, parcel_id):
         query = "UPDATE {} SET {} = '{}' WHERE parcel_id ={};".format(table_name, column, new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
+
 
     def delete_table_column(self, table_name, table_colum, id):
         delete_query = "DELETE from {} WHERE {} = '{}';".format(
@@ -170,16 +186,19 @@ class Database(object):
         self.cursor.execute(delete_query)
         self.connection.commit()
 
+
     def change_present_location(self, table, column, location, parcel_id):
         query = "UPDATE {} SET {} = '{}' WHERE parcel_id ={};".format(table, column, location, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
+
 
     def cancel_parcel(self, id):
         sql = "UPDATE parcels SET status='{}' WHERE parcel_id = '{}'".format('cancelled', id)
         self.cursor.execute(sql)
         self.connection.commit()
         return self.get_parcel_by_value('parcels', 'parcel_id', id)
+
 
     def is_parcel_owner(self, parcel_id, user_id):
         sql = "SELECT user_id FROM parcels WHERE user_id ='{}'".format(user_id)
@@ -190,6 +209,7 @@ class Database(object):
             return True
         return False
 
+    
     def drop_tables(self):
         drop_query = "DROP TABLE IF EXISTS {0} CASCADE"
         tables = ["users", "parcels"]
