@@ -2,6 +2,10 @@
 language: python
 python:
     - "3.6"
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database sendit;' -U postgres
 # command to install dependencies
 install:
   - pip install -r requirements.txt
