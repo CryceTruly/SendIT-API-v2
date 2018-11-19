@@ -1,7 +1,7 @@
 import jwt
 import re
 import datetime
-from app.auth.decorator import response, response_message
+from app.auth.decorator import response, response_message, token_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
@@ -56,9 +56,9 @@ def create_user():
         if not isinstance(username, str):
             return response_message(
                 'Type Error', 'username must all be string', 400)
-        if not re.match("^[a-zA-Z0-9_.-]+$", username):
+        if not re.match("^[a-zA-Z0-9_.]+$", username):
             return response_message(
-                'Space Error', 'Username should not have a whitespace, better user _',
+                'Space Error', 'Username should not have a whitespace',
                 400)
         if db.get_user_by_value('users', 'email', email):
             return response_message(
@@ -91,42 +91,40 @@ def login_user():
         if not username and not password:
             return response_message(
                 'Failed', 'Username and password are required', 400)
-        db_user = db.get_user_by_value('users','username', username)
+        db_user = db.get_user_by_value('users', 'username', username)
         if not db_user:
             return response_message(
-                'Failed', 'incorrect username', 401)
+                'Failed', 'username and password are incorrect', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
-        if not check_password_hash(new_user.password,password):
-            return response_message('failed','wrong password',401)
+        if not check_password_hash(new_user.password, password):
+            return response_message('failed', 'username and password are incorrect', 401)
         payload = {
-            'email': new_user.email,
+
             'exp': datetime.datetime.utcnow() +
                    datetime.timedelta(days=0, hours=23),
-            'iat': datetime.datetime.utcnow(),
-            'sub': new_user.user_id,
-            'user_name':new_user.username,
+            'email': new_user.email,
+            'user_id': new_user.user_id,
+            'user_name': new_user.username,
             'is_admin': new_user.is_admin
         }
         token = jwt.encode(
             payload,
-            'trulysSecret',
+            'trulysKey',
             algorithm='HS256'
         )
         if token:
-            return response(
-                new_user.user_id, new_user.username,
-                'You have successfully logged in.',
-                token.decode('UTF-8'), 200)
-
-
+            return jsonify({"msg": "You have successfully logged in ", "auth_token ": token.decode('UTF-8')}), 200
     except KeyError as e:
         return ({'KeyError': str(e)})
 
 
 @auth.route('/api/v2/users', methods=['GET'])
-def get_users():
+@token_required
+def get_users(current_user):
+    if not db.is_admin(current_user.user_id):
+        return response_message('Fobidden operation', 'Only admin users can view all users', 403)
     users = Database().get_users()
     user_list = []
     for user in users:
@@ -143,16 +141,40 @@ def get_users():
     return jsonify({"users": user_list}), 200
 
 
-@auth.route('/api/v2/users/<int:id>/parcels',methods=['GET'])
-def get_user_parcels(id):
+@auth.route('/api/v2/users/<int:id>/parcels', methods=['GET'])
+@token_required
+def get_user_parcels(current_user, id):
+    if not db.is_admin(current_user.user_id):
+        if str(current_user.user_id) != str(id):
+            return response_message('Forbidden operation', 'You do not have permissions to access that', 403)
+
     """
     returns parcel requests created by a user given the users id
     """
     if not db.get_user_by_value('users', 'user_id', id) is None:
-        return jsonify({'user_parcels':db.get_user_parcels(id)})
+        return jsonify({'user_parcels': db.get_user_parcels(id)})
     else:
         return jsonify({"msg": 'User does not exist'}), 404
 
 
+@auth.route('/api/v2/auth/<int:user_id>/promote_user', methods=['PUT'])
+@token_required
+def promote_user(current_user, user_id):
+    if db.get_user_by_value('users', 'user_id', user_id) is None:
+        return response_message('Error', 'User  does not exist', 404)
+    db.update_role(user_id)
+    return response_message('success', 'User is now admin', 200)
 
 
+@auth.route('/api/v2/auth/<int:user_id>/demote_user', methods=['PUT'])
+@token_required
+def demote_user(current_user, user_id):
+    if db.get_user_by_value('users', 'user_id', user_id) is None:
+        return response_message('Error', 'User does not exist', 404)
+    db.revoke_admin_previledges(user_id)
+    return response_message('success', 'User is now a regular user', 200)
+
+
+@auth.route('/api/v2/auth/logout',methods=['POST'])
+def logout():
+    pass
