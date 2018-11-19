@@ -1,8 +1,9 @@
 import geopy.distance
+import jwt
 import requests
 import os
 
-from app.auth.decorator import response_message
+from app.auth.decorator import response_message, get_token
 from app.database.database import Database
 
 
@@ -20,9 +21,8 @@ class Helper:
         :param request_data:
         :return boolen:
         """
-        keys = ["destination_address", "pickup_address", "comment_description",
-                "user_id", "sender_email", "recipient_phone",
-                "recipient_email", "status", "recipient_name", "weight", "current_location"]
+        keys = ["destination_address", "pickup_address", "parcel_description","recipient_phone",
+                "recipient_email","recipient_name", "weight"]
         try:
 
             if set(request_data).issubset(keys):
@@ -104,3 +104,16 @@ class Helper:
             if p['user_id'] == user_id:
                 return True
         return False
+
+    def get_current_user_id(self):
+
+        try:
+            token = get_token()
+            data = jwt.decode(token, 'trulysSecret')
+            return data['user_id']
+
+
+        except jwt.ExpiredSignatureError:
+            return 'Signature expired. Please log in again.', 401
+        except jwt.InvalidTokenError:
+            return 'Invalid token. Please log in again.', 401
