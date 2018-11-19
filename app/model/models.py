@@ -64,7 +64,7 @@ class Parcel:
         """
         Generate status list for parcel orders
         """
-        status = ['pickup_started', 'in_transit', 'cancelled', 'delivered']
+        status = ['pickup_started','rejected', 'in_transit', 'cancelled', 'delivered']
         return status
 
 
