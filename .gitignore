@@ -1,7 +1,0 @@
-venv
-.idea
-.vscode
-app/__pycache__/
-__pycache__/
-coverage
-.pytest_cache
