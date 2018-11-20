@@ -34,7 +34,7 @@ class Database(object):
             pickup_address VARCHAR (255),
             parcel_description VARCHAR (500),
             sender_email VARCHAR (255),
-            status VARCHAR (25),
+            status VARCHAR (25) DEFAULT 'order_placed',
             recipient_name VARCHAR (255),
             weight INTEGER ,
             qty INTEGER,
@@ -46,8 +46,9 @@ class Database(object):
             distance DOUBLE PRECISION,
             price DOUBLE PRECISION,
             created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,last_modified DATE DEFAULT CURRENT_TIMESTAMP)"""
-        self.ursor.execute(create_table)
+        self.cursor.execute(create_table)
         self.connection.commit()
+
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
@@ -61,7 +62,7 @@ class Database(object):
         self.connection.commit()
 
     def insert_into_parcels(self, destination_address, pickup_address, parcel_description, user_id, sender_email,
-                            recipient_phone, recipient_email, recipient_name, weight, latlng, destlatlng, distance,
+                            recipient_phone, recipient_email, recipient_name, weight,qty, latlng, destlatlng, distance,
                             price):
         """
         Query to add parcel order to the database : by user
@@ -71,7 +72,7 @@ class Database(object):
                      recipient_email, recipient_name, weight,qty,current_location,pickplatlng,destlatlng,distance,price)
                     VALUES('{}','{}','{}','{}','{}','{}','{}','{}',{},{} ,'{}','{}','{}',{},{}); """.format(
             destination_address, pickup_address, parcel_description, user_id, sender_email, recipient_phone,
-            recipient_email, recipient_name, weight, pickup_address,str(24), str(24), distance, price)
+            recipient_email, recipient_name, weight,qty, pickup_address,str(24), str(24), distance, price)
         self.cursor.execute(order_query)
         self.connection.commit()
 
