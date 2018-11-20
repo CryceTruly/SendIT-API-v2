@@ -1,12 +1,13 @@
 from app.database.database import Database
 from app.model.models import User
-from tests.test_base import BaseTestCase
 import json
+
+from tests.test_base import TestsStart
 
 db = Database()
 
 
-class TestAuth(BaseTestCase):
+class TestAuth(TestsStart):
 
     def test_user_class(self):
         user = User(1, "Cryce Truly", "crycetruly","crycetruly@gmail.com", "0756778877", 'password')
@@ -92,7 +93,7 @@ class TestAuth(BaseTestCase):
         Test Content_type not application/json for sign up request
         """
         rv = self.client.post(
-            '/api/v1/auth/signup',
+            '/api/v2/auth/signup',
             content_type="text",
             data=json.dumps(dict({'status': 'register'}))
         )
@@ -105,7 +106,7 @@ class TestAuth(BaseTestCase):
         Test Content_type not application/json for login request
         """
         rv = self.client.post(
-            '/api/v1/auth/login',
+            '/api/v2/auth/login',
             content_type="text",
             data=json.dumps(dict({'status': 'register'}))
         )

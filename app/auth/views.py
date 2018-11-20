@@ -29,17 +29,21 @@ def create_user():
             return jsonify({"Failed": "Empty request"}), 400
         username = detail['username']
         email = detail['email']
-        phone_number = detail['phone_number']
-        if len(str(phone_number)) < 9:
-            return response_message('Invalid', 'Phone Number should be atleast 10 characters', 400)
-        if not re.match("[0-9]", phone_number):
-            return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
-
         fullname = detail['fullname']
         if not fullname:
             return response_message('Missing', 'FullName is required', 400)
-        if len(fullname) < 2:
-            return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
+
+        phone_number = str(detail['phone_number'])
+        if len(phone_number) < 10:
+            return response_message('Invalid', 'Phone Number should be atleast 10 characters', 400)
+
+        if not re.match("[0-9]", phone_number):
+            return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
+        if not isinstance(fullname,str):
+            return response_message('Invalid', 'Fullname should be string value', 400)
+
+        if len(str(fullname)) < 2:
+               return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
 
         if len(username) < 4:
             return response_message('Invalid', 'UserName  should be atleaset 4 characters long', 400)
@@ -69,7 +73,7 @@ def create_user():
         db.insert_into_user(fullname, username, email, phone_number, password)
         return response_message('Success', 'User account successfully created, you can now login', 201)
     except KeyError as e:
-        return {'KeyError': str(e)}
+        return jsonify({'Error': str(e) +' is missing'}),400
 
 
 @auth.route('/api/v2/auth/login', methods=['POST'])
@@ -94,12 +98,12 @@ def login_user():
         db_user = db.get_user_by_value('users', 'username', username)
         if not db_user:
             return response_message(
-                'Failed', 'username and password are incorrect', 401)
+                'Failed', 'username and password are invalid', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
         if not check_password_hash(new_user.password, password):
-            return response_message('failed', 'username and password are incorrect', 401)
+            return response_message('failed', 'username and password are invalid', 401)
         payload = {
 
             'exp': datetime.datetime.utcnow() +

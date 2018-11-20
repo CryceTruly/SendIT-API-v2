@@ -1,5 +1,5 @@
-from project.views.parcels import ap
-from project.auth.views import auth
+from app.views.parcels import ap
+from app.auth.views import auth
 from flask import Flask
 from flask_cors import CORS
 

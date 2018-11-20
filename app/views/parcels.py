@@ -1,11 +1,11 @@
 from flask import jsonify, request, Blueprint
 import psycopg2
-from project.database.database import Database
+from app.database.database import Database
 
-from project.auth.decorator import response_message, token_required
+from app.auth.decorator import response_message, token_required
 import re
 
-from project.util.helper import Helper
+from app.util.helper import Helper
 
 ap = Blueprint('parcels', __name__)
 db = Database()
@@ -13,7 +13,7 @@ db = Database()
 
 @ap.route("/")
 @token_required
-def welcome():
+def welcome(c):
     return response_message("ok", "Welcome to the sendit api v2", 200)
 
 
@@ -39,7 +39,7 @@ def get_parcels(current_user):
                 "destination_address": parcel[2],
                 "sender_email": parcel[5],
                 "recipient_email": parcel[10],
-                "recipient_phone_number": parcel[7]
+                "recipient_phone_number_number": parcel[7]
             }
             parcel_list.append(parcel_dict)
         return jsonify({"parcels": parcel_list}), 200
@@ -67,17 +67,20 @@ def get_a_parcel(current_user, id):
         "pickup_address": results[3],
         "destination_address": results[2],
         "sender_email": results[5],
-        "recipient_email": results[10],
-        "recipient_phone": results[7],
-        "current_location": results[9],
-        "recipient fullname": results[11],
-        "destination latlng ": results[12],
+        "recipient_email": results[11],
+        "recipient_phone_number": results[7],
+        "current_location": results[10],
+        "recipient fullname": results[12],
+        "destination latlng ": results[14],
         "pickuplatlng": results[13],
-        "distance(km)": results[14],
+        "weight":results[9],
+        "distance(km)": results[16],
         "status":results[6],
         "price": results[15],
-        "created": results[16],
-        "last_modified": results[17]
+        "created": results[18],
+        "last_modified": results[17],
+        "parcel_description":results[4],
+        "quantity":results[8]
 
     }
     return jsonify(parcel_dict), 200
@@ -98,7 +101,7 @@ def add_parcel(current_user):
     try:
         if not is_valid(request_data['recipient_email']):
             return jsonify({"msg": "Recipient email is invalid"}), 400
-        if len(str(request_data['recipient_phone'])) < 10:
+        if len(str(request_data['recipient_phone_number'])) < 10:
             return jsonify({"msg": "Recipient Phone number should be atleast 10 characters"}), 400
 
         if len(str(request_data['parcel_description'])) < 5:
@@ -110,9 +113,15 @@ def add_parcel(current_user):
 
         if not isinstance(request_data['destination_address'], str):
             return jsonify({"msg": "destination_address should be string values"}), 400
+        if not isinstance(request_data['quantity'], int):
+            return jsonify({"msg": "quantity should be integer values"}), 400
 
         if not isinstance(request_data['weight'], int):
             return jsonify({"msg": "weight should be integer values"}), 400
+
+        if not isinstance(request_data['recipient_name'],str):
+            return jsonify({"msg": "destination_address should be string values"}), 400
+
 
     except KeyError as keyerr:
         return response_message('Failed', str(keyerr) + 'is missing', 400)
@@ -120,6 +129,10 @@ def add_parcel(current_user):
     pickup_latlng = helper.get_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)
     price = helper.get_charge(request_data['weight'], distance)
+
+    if db.new_parcel_has_fishy_behaviour(current_user.user_id,request_data['recipient_email'],
+                                         request_data['parcel_description']):
+        return jsonify({"msg":"Not allowed,similar order already placed"}),403
 
     try:
 
@@ -130,8 +143,9 @@ def add_parcel(current_user):
                                db.get_user_email(current_user.user_id),
                                request_data['recipient_name'],
                                request_data['recipient_email'],
-                               request_data['recipient_phone'],
+                               request_data['recipient_phone_number'],
                                request_data['weight'],
+                               request_data['quantity'],
                                pickup_latlng,
                                dest_lat_lng,
                                distance,
@@ -154,7 +168,7 @@ def cancel_parcel_request(current_user,id):
     if db.is_order_delivered(id):
         return jsonify({"msg": "Not allowed parcel request has already been delivered"}), 403
     if not db.is_parcel_owner(id, current_user.user_id):
-        return jsonify({"msg": "You are not the parcel owner cannot cancel order"}), 403
+        return jsonify({"msg": "Not athorized"}), 403
 
     db.cancel_parcel(id)
     return jsonify(
