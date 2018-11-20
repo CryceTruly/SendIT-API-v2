@@ -10,7 +10,8 @@ class Database(object):
             """
             creates a db
             """
-            self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
+            #self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
+            self.connection=psycopg2.connect("dbname=db1ni1t598io7g user=mlepqftxygqppq password=99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505")
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
