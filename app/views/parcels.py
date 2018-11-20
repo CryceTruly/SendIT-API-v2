@@ -275,8 +275,8 @@ def sendemail(email, subject, body):
         MAIL_SERVER='smtp.gmail.com',
         MAIL_PORT=465,
         MAIL_USE_SSL=True,
-        MAIL_USERNAME=os.environ.get('SENDIT_EMAIL'),
-        MAIL_PASSWORD=os.environ.get('SENDIT_EMAIL_PASS')
+        MAIL_USERNAME=os.environ.get('trulysEmail'),
+        MAIL_PASSWORD=os.environ.get('trulysPass')
     )
     mail = Mail(app)
     try:
