@@ -37,6 +37,7 @@ class Database(object):
             status VARCHAR (25),
             recipient_name VARCHAR (255),
             weight INTEGER ,
+            qty INTEGER,
             current_location VARCHAR (255),
             recipient_email VARCHAR (255),
             recipient_phone VARCHAR (255),
@@ -45,7 +46,7 @@ class Database(object):
             distance DOUBLE PRECISION,
             price DOUBLE PRECISION,
             created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,last_modified DATE DEFAULT CURRENT_TIMESTAMP)"""
-        self.cursor.execute(create_table)
+        self.ursor.execute(create_table)
         self.connection.commit()
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
@@ -67,8 +68,8 @@ class Database(object):
         """
         order_query = """INSERT INTO parcels(destination_address, pickup_address, parcel_description,
                      user_id, sender_email, recipient_phone,
-                     recipient_email, recipient_name, weight,current_location,pickplatlng,destlatlng,distance,price)
-                    VALUES('{}','{}','{}','{}','{}','{}','{}','{}',{},'{}','{}','{}',{},{}); """.format(
+                     recipient_email, recipient_name, weight,qty,current_location,pickplatlng,destlatlng,distance,price)
+                    VALUES('{}','{}','{}','{}','{}','{}','{}','{}',{},{} ,'{}','{}','{}',{},{}); """.format(
             destination_address, pickup_address, parcel_description, user_id, sender_email, recipient_phone,
             recipient_email, recipient_name, weight, pickup_address,str(24), str(24), distance, price)
         self.cursor.execute(order_query)
@@ -222,4 +223,11 @@ class Database(object):
         query = "UPDATE parcels SET status = '{}' WHERE parcel_id ={};".format(param, id)
         self.cursor.execute(query)
         self.connection.commit()
+
+    def new_parcel_has_fishy_behaviour(self, user_id, reciever_email, desc):
+        sql="SELECT * FROM parcels WHERE user_id = {} AND recipient_email= '{}' and parcel_description = '{}'".format(user_id,reciever_email,desc)
+        self.cursor.execute(sql)
+        self.connection.commit()
+        results=self.cursor.fetchall()
+        return results
 

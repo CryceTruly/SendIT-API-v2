@@ -1,18 +1,18 @@
 from flask import jsonify, request, Blueprint
 import psycopg2
-from app.database.database import Database
+from project.database.database import Database
 
-from app.auth.decorator import response_message, token_required
+from project.auth.decorator import response_message, token_required
 import re
 
-from app.helper import Helper
-from app.model.models import Parcel
+from project.util.helper import Helper
 
 ap = Blueprint('parcels', __name__)
 db = Database()
 
 
 @ap.route("/")
+@token_required
 def welcome():
     return response_message("ok", "Welcome to the sendit api v2", 200)
 
