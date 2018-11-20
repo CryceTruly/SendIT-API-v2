@@ -1,7 +1,9 @@
 from flask import jsonify, request, Blueprint
 import psycopg2
 from app.database.database import Database
-
+from flask import current_app as app
+from flask_mail import Message,Mail
+import os
 from app.auth.decorator import response_message, token_required
 import re
 
@@ -181,16 +183,22 @@ def change_present_location(current_user, id):
     if not db.is_admin(current_user.user_id):
         return response_message('Unauthorized', 'Not enough access privileges', 403)
     request_data = request.get_json()
-    if not isinstance(request_data['current_location'], str):
-        return response_message('error', 'current location should be string value', 400)
-    if not db.get_parcel_by_value('parcels', 'parcel_id', id):
-        return jsonify({'msg': 'order not found'}), 404
-    if is_should_update(request_data):
-        db.change_present_location(request_data['current_location'], id)
-        # TODO SEND AN EMAIL
-        return jsonify({'msg': 'current location updated successfully'}), 200
-    else:
-        return jsonify({'msg': 'bad request object, current location missing'}), 400
+    try:
+        if not isinstance(request_data['current_location'], str):
+            return response_message('error', 'current location should be string value', 400)
+        if not db.get_parcel_by_value('parcels', 'parcel_id', id):
+            return jsonify({'message': 'order not found'}), 404
+        if is_should_update(request_data):
+            db.change_present_location(request_data['current_location'], id)
+            our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+            sendemail(our_user[3], 'Order Update',
+                      'Hello there ' + our_user[1] + '\nYour parcels location is now ' + db.get_current_location(id))
+            return jsonify({'message': 'current location updated successfully'}), 200
+        else:
+            return jsonify({'message': 'bad request object, current location missing'}), 400
+
+    except KeyError as identifier:
+        return jsonify({'msg': str(identifier) + 'is missing'})
 
 
 @ap.route('/api/v2/parcels/<int:id>/status', methods=['PUT'])
@@ -257,17 +265,28 @@ def is_should_update(data):
     return False
 
 
-# def sendemail(email, parceltoupdate):
-#     try:
-#         msg = Message("My SendIT Order Delivery Update",
-#                       sender="aacryce@gmail.com",
-#                       recipients=[email])
-#         msg.body = 'hello there'
-#         mail.send(msg)
-#         return jsonify({'msg': 'updated successfully'}), 200
-#     except Exception as identifier:
-#         return jsonify(identifier)
-
+def sendemail(email, subject, body):
+    '''
+    send an email to a user
+    '''
+    app.config.update(
+        DEBUG=True,
+        # EMAIL SETTINGS
+        MAIL_SERVER='smtp.gmail.com',
+        MAIL_PORT=465,
+        MAIL_USE_SSL=True,
+        MAIL_USERNAME=os.environ.get('SENDIT_EMAIL'),
+        MAIL_PASSWORD=os.environ.get('SENDIT_EMAIL_PASS')
+    )
+    mail = Mail(app)
+    try:
+        msg = Message(subject,
+                      sender="updates@sendit.com",
+                      recipients=[email])
+        msg.body = body
+        mail.send(msg)
+    except Exception as identifier:
+        pass
 
 def is_valid(email):
     """helper for checking valid emails"""
