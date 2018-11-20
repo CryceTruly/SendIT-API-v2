@@ -148,15 +148,33 @@ def get_users(current_user):
 @auth.route('/api/v2/users/<int:id>/parcels', methods=['GET'])
 @token_required
 def get_user_parcels(current_user, id):
-    if not db.is_admin(current_user.user_id):
+    if not current_user.is_admin:
         if str(current_user.user_id) != str(id):
             return response_message('Forbidden operation', 'You do not have permissions to access that', 403)
 
     """
     returns parcel requests created by a user given the users id
     """
+
     if not db.get_user_by_value('users', 'user_id', id) is None:
-        return jsonify({'user_parcels': db.get_user_parcels(id)})
+        try:
+
+            parcel_list = []
+            for parcel in db.get_user_parcels(id):
+                parcel_dict = {
+                    "parcel_id": parcel[0],
+                    "user_id": parcel[1],
+                    "pickup_address": parcel[3],
+                    "destination_address": parcel[2],
+                    "sender_email": parcel[5],
+                    "recipient_email": parcel[10],
+                    "recipient_phone_number_number": parcel[7]
+                }
+                parcel_list.append(parcel_dict)
+            return jsonify({"parcels": parcel_list}), 200
+        except IndexError as e:
+            return jsonify({"msg": 'User does not exist'}), 404
+
     else:
         return jsonify({"msg": 'User does not exist'}), 404
 
