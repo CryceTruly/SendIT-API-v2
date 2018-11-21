@@ -8,6 +8,7 @@ from flasgger import swag_from
 
 from app.database.database import Database
 from app.model.models import User
+import os
 
 auth = Blueprint('auth', __name__)
 db = Database()
@@ -112,7 +113,7 @@ def login_user():
         }
         token = jwt.encode(
             payload,
-            'trulysKey',
+            os.environ.get('trulysKey'),
             algorithm='HS256'
         )
         if token:
