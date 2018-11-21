@@ -30,7 +30,7 @@ def token_required(f):
         if 'x-access-token' in request.headers:
             token = request.headers['x-access-token']
         if not token:
-            return jsonify({"msg": "Not logged in,please login"}), 401
+            return jsonify({"message": "please login"}), 401
 
         try:
             data = jwt.decode(token, 'trulysKey')
