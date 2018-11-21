@@ -186,8 +186,8 @@ class TestAuth(TestsStart):
             '/api/v2/parcels',
             headers=dict(Authorization='Bearer ywjjkjkjkwe'))
         data = json.loads(res.data.decode())
-        self.assertEqual("please login", data['message'])
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual("Signature is invalid,please login again", data['message'])
+        self.assertEqual(res.status_code, 403)
 
     def test_missing_username_keyword(self):
         obj = {
@@ -244,6 +244,142 @@ class TestAuth(TestsStart):
             data = json.loads(rs.data.decode())
             self.assertEqual(rs.status_code, 401)
 
+    def test_desc_not_string(self):
+        """
+        description and meal should be of string data type
+        """
+        self.signup_user(
+                "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        response = self.login_user("fred", "12389894")
+        res = json.loads(response.data.decode())
+        self.assertTrue(res['auth_token'])
+        token = res['auth_token']
+        ord = {
+           	"recipient_name": "Aron Mike",
+            "parcel_description": 11111111111111,
+            "weight":90,
+            "quantity": 22,
+            "pickup_address":"Mukono",
+            "destination_address":"Entebbe",
+            "recipient_phone_number":"0767878787",
+            "recipient_email":"rme@gmail.com"
+        }
+        rs = self.app.post(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+            )
+        self.assertEqual(rs.status_code, 400)
+        data = json.loads(rs.data.decode())
+        self.assertTrue(data['message'] == 'Description should be string values')
+    def test_empty_request(self):
+        """
+        description and meal should be of string data type
+        """
+        self.signup_user(
+                "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        response = self.login_user("fred", "12389894")
+        res = json.loads(response.data.decode())
+        self.assertTrue(res['auth_token'])
+        token = res['auth_token']
+        ord = {
+           	
+        }
+        rs = self.app.post(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+            )
+        self.assertEqual(rs.status_code, 400)
+        data = json.loads(rs.data.decode())
+        self.assertTrue(data['status'] == 'Failed')
 
 
+    def test_recipient_email_invalid(self):
+        """
+        description and meal should be of string data type
+        """
+        self.signup_user(
+                "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        response = self.login_user("fred", "12389894")
+        res = json.loads(response.data.decode())
+        self.assertTrue(res['auth_token'])
+        token = res['auth_token']
+        ord = {
+           	"recipient_name": "Aron Mike",
+            "parcel_description": 11111111111111,
+            "weight":90,
+            "quantity": 22,
+            "pickup_address":"Mukono",
+            "destination_address":"Entebbe",
+            "recipient_phone_number":"0767878787",
+            "recipient_email":"rmegmail.com"
+        }
+        rs = self.app.post(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+            )
+        self.assertEqual(rs.status_code, 400)
+        data = json.loads(rs.data.decode())
+        self.assertTrue(data['message'] == 'Recipient email is invalid')
 
+
+    def test_cannot_accessallparcels(self):
+        """
+       a normal user shd not view all parcels
+        """
+        self.signup_user(
+                "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        response = self.login_user("fred", "12389894")
+        res = json.loads(response.data.decode())
+        self.assertTrue(res['auth_token'])
+        token = res['auth_token']
+        rs = self.app.get(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=""
+            )
+        self.assertEqual(rs.status_code, 403)
+        data = json.loads(rs.data.decode())
+        self.assertTrue(data['message'] == 'Only admin users can view all orders')
+        self.assertTrue(data['status'] == 'Forbidden operation')
+
+    def test_should_notview_other_parcels(self):
+        """
+       a normal user shd not view all parcels
+        """
+        self.signup_user(
+                "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        response = self.login_user("fred", "12389894")
+        res = json.loads(response.data.decode())
+        self.assertTrue(res['auth_token'])
+        token = res['auth_token']
+        ord = {
+                "recipient_name": "Aron Mike",
+                "parcel_description": "Hello there,deliver stuff",
+                "weight":90,
+                "quantity": 22,
+                "pickup_address":"Mukono",
+                "destination_address":"Entebbe",
+                "recipient_phone_number":"0767878787",
+                "recipient_email":"rmse@gmail.com"
+            }
+        rs = self.app.post(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+            )
+        self.assertEqual(rs.status_code,403)
+        nrs=self.app.get(
+            '/api/v2/users/1/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+            )
+        self.assertEqual(nrs.status_code,404)

@@ -9,7 +9,33 @@ from tests.test_base import TestsStart
 
 
 class TestsParcel(TestsStart):
-    pass
+     def test_desc_and_meal_not_string(self):
+        """
+        description and meal should be of string data type
+        """
+        # self.signup_user(
+        #         "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
+        # response = self.login_user("fred", "12389894")
+        # res = json.loads(response.data.decode())
+        # self.assertTrue(res['auth_token'])
+        # token = res['auth_token']
+        # ord = {
+        #     "meal": 2334,
+        #     "description": True,
+        #     "price": 7900,
+        #     "image": "image.jpg"
+        # }
+        # rs = self.client.post(
+        #     '/api/v1/menu',
+        #     content_type="application/json",
+        #     headers=dict(Authorization='Bearer' " " + token),
+        #     data=json.dumps(ord)
+        #     )
+        # self.assertEqual(rs.status_code, 401)
+        # data = json.loads(rs.data.decode())
+        # self.assertTrue(data['status'] == 'Failed')
+        # self.assertTrue(data['message'] == 'Description and Dish must be string format')
+
 
     # def test_welcome(self):
     #     '''

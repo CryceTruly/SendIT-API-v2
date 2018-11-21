@@ -15,7 +15,8 @@ class User:
         self.joined = datetime.datetime.now()
 
     def __str__(self):
-        return "user: {} username:{} phonenumber:{} with email {}:isadmin:{}".format(self.user_id ,self.username,self.phone_number,self.email, self.is_admin)
+        return "user: {} username:{} phonenumber:{} with email {}:isadmin:{}".format(self.user_id ,self.username,
+        self.phone_number,self.email, self.is_admin)
 
 
 class Parcel:

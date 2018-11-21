@@ -119,7 +119,7 @@ def login_user():
             algorithm='HS256'
         )
         if token:
-            return jsonify({"message": "You have successfully logged in", "auth_token ": token.decode('UTF-8')}), 200
+            return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
     except Exception as er:
          return response_message(
                 'Failed', 'username and password are invalid', 400)
