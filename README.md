@@ -1,5 +1,7 @@
 # SendIT-Api
 [![Build Status](https://travis-ci.org/CryceTruly/SendITApi-v2.svg?branch=develop)](https://travis-ci.org/CryceTruly/SendITApi-v2)
+[![Build Status](https://travis-ci.org/CryceTruly/SendITApi-v2.svg?branch=appfixes)](https://travis-ci.org/CryceTruly/SendITApi-v2)
+[![Coverage Status](https://coveralls.io/repos/github/CryceTruly/SendITApi-v2/badge.svg?branch=appfixes)](https://coveralls.io/github/CryceTruly/SendITApi-v2?branch=appfixes)
 [![Maintainability](https://api.codeclimate.com/v1/badges/16b58c2fd68f0361a2bf/maintainability)](https://codeclimate.com/github/CryceTruly/SendITApi-v2/maintainability)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ac47983c1bc5459e9774c9af64f7974d)](https://www.codacy.com/app/CryceTruly/SendIT-Api?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CryceTruly/SendIT-Api&amp;utm_campaign=Badge_Grade)
 ![Hackage-Deps](https://img.shields.io/hackage-deps/v/lens.svg)
