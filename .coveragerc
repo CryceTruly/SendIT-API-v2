@@ -1,0 +1,7 @@
+[report] 
+omit =
+    app\database\database.py
+    app\auth\decorator.py
+    app/util/*
+    app/model/*
+
