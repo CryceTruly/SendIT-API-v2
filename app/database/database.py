@@ -10,7 +10,10 @@ class Database(object):
             """
             creates a db
             """
+           # conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
+
             self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
+            #self.connection=psycopg2.connect(conn_string)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -231,4 +234,18 @@ class Database(object):
         self.connection.commit()
         results=self.cursor.fetchall()
         return results
+
+    def get_current_location(self, id):
+        query = "SELECT current_location FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+
+    def get_parce_owner_id(self, id):
+        query = "SELECT user_id FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
 

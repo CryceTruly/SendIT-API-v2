@@ -25,7 +25,7 @@ class Parcel:
 
     def __init__(self, parcel_id, destination_address, pickup_address, comment_description,
                  user_id, sender_email, recipient_phone,
-                 recipient_email, recipient_name, weight):
+                 recipient_email, recipient_name, weight,quantity):
         self.parcel_id = parcel_id
         self.destination_address = destination_address
         self.pickup_address = pickup_address
@@ -34,6 +34,7 @@ class Parcel:
         self.sender_email = sender_email
         self.status = self.status()[0]
         self.recipient_name = recipient_name
+        self.quantity=quantity
         self.weight = weight
         self.current_location = pickup_address
         self.recipient_email = recipient_email
