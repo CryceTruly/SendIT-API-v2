@@ -27,7 +27,7 @@ def create_user():
     try:
         if not detail:
             return jsonify({"Failed": "Empty request"}), 400
-        username = detail['username']
+        username = detail['username'].replace(" ","")
         email = detail['email']
         fullname = detail['fullname']
         if not fullname:
@@ -63,10 +63,6 @@ def create_user():
         if not isinstance(username, str):
             return response_message(
                 'Type Error', 'username must all be string', 400)
-        if not re.match("^[a-zA-Z0-9_.]+$", username):
-            return response_message(
-                'Space Error', 'Username should not have a whitespace',
-                400)
         if db.get_user_by_value('users', 'email', email):
             return response_message(
                 'Failed', 'User with email ' + email + ' already exists', 409)
