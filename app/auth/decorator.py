@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from flask import request, jsonify, make_response
 import jwt
@@ -35,10 +36,10 @@ def token_required(f):
             return jsonify({"message": "please login"}), 401
 
         try:
-            data = jwt.decode(token, 'trulysKey')
+            data = jwt.decode(token, os.environ.get('trulysKey'),)
             database = Database()
             query = database.get_user_by_value(
-                'users', data['user_id'], data['user_id']
+                'users', 'user_id', data['user_id']
             )
             if not query:
                 return {"message": "User does not exist"}, 400

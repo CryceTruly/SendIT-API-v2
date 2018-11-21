@@ -98,6 +98,7 @@ def login_user():
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
+        print('returned id from login '+str(new_user.user_id))
         if not check_password_hash(new_user.password, password):
             return response_message('Failed', 'username and password are invalid', 400)
         payload = {
