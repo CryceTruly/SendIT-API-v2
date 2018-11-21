@@ -15,7 +15,7 @@ db = Database()
 
 @ap.route("/")
 @token_required
-def welcome(c):
+def welcome(current_user):
     return response_message("ok", "Welcome to the sendit api v2", 200)
 
 
