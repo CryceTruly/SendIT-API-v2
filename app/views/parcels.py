@@ -2,10 +2,10 @@ from flask import jsonify, request, Blueprint
 import psycopg2
 from app.database.database import Database
 from flask import current_app as app
-from flask_mail import Message,Mail
+from flask_mail import Message, Mail
 import os
 from app.auth.decorator import response_message, token_required
-import re
+from validate_email import validate_email
 
 from app.util.helper import Helper
 
@@ -25,11 +25,7 @@ def welcome(current_user):
 @token_required
 def get_parcels(current_user):
     if not db.is_admin(current_user.user_id):
-        return response_message('Forbidden operation', 'Only admin users can view all orders', 403)
-
-    '''
-        returns a list of all order requests
-    '''
+        return response_message('unauthorized operation', 'Only admin users can view all orders', 401)
     all = db.get_all_parcels()
     if all:
         parcel_list = []
@@ -75,14 +71,14 @@ def get_a_parcel(current_user, id):
         "recipient fullname": results[12],
         "destination latlng ": results[14],
         "pickuplatlng": results[13],
-        "weight":results[9],
+        "weight": results[9],
         "distance(km)": results[16],
-        "status":results[6],
+        "status": results[6],
         "price": results[15],
         "created": results[18],
         "last_modified": results[17],
-        "parcel_description":results[4],
-        "quantity":results[8]
+        "parcel_description": results[4],
+        "quantity": results[8]
 
     }
     return jsonify(parcel_dict), 200
@@ -101,7 +97,7 @@ def add_parcel(current_user):
     request_data = request.get_json()
     helper = Helper()
     try:
-        if not is_valid(request_data['recipient_email']):
+        if not validate_email(request_data['recipient_email']):
             return jsonify({"message": "Recipient email is invalid"}), 400
         if len(str(request_data['recipient_phone_number'])) < 10:
             return jsonify({"message": "Recipient Phone number should be atleast 10 characters"}), 400
@@ -121,7 +117,7 @@ def add_parcel(current_user):
         if not isinstance(request_data['weight'], int):
             return jsonify({"message": "weight should be integer values"}), 400
 
-        if not isinstance(request_data['recipient_name'],str):
+        if not isinstance(request_data['recipient_name'], str):
             return jsonify({"message": "destination_address should be string values"}), 400
 
 
@@ -130,11 +126,7 @@ def add_parcel(current_user):
     dest_lat_lng = helper.get_latlong(request_data['destination_address'])
     pickup_latlng = helper.get_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)
-    price = helper.get_charge(request_data['weight'], distance)
-
-    if db.new_parcel_has_fishy_behaviour(current_user.user_id,request_data['recipient_email'],
-                                         request_data['parcel_description']):
-        return jsonify({"message":"Not allowed,similar order already placed"}),403
+    price = helper.get_charge(request_data['weight'], distance, request_data['quantity'])
 
     try:
 
@@ -153,14 +145,14 @@ def add_parcel(current_user):
                                distance,
                                price)
     except psycopg2.IntegrityError:
-        return response_message('Failed', 'Integrity Error:the user is being provided is inexistent', 403)
+        return response_message('message', 'something went wrong', 403)
     return response_message('success', 'Parcel request has been created successfully', 201)
 
 
 # PUT /parcels/<parcelId>/cancel
 @ap.route('/api/v2/parcels/<int:id>/cancel', methods=['PUT'])
 @token_required
-def cancel_parcel_request(current_user,id):
+def cancel_parcel_request(current_user, id):
     '''
     cancels a specific request given its identifier
     '''
@@ -170,18 +162,17 @@ def cancel_parcel_request(current_user,id):
     if db.is_order_delivered(id):
         return jsonify({"message": "Not allowed parcel request has already been delivered"}), 403
     if not db.is_parcel_owner(id, current_user.user_id):
-        return jsonify({"message": "Not athorized"}), 403
-
-    db.cancel_parcel(id)
+        return jsonify({"message": "Not authorized"}), 401
     return jsonify(
-        {"message": "parcel request was cancelled successfully"}), 200
+        {"message": "parcel request was cancelled successfully", "parcel_id": db.cancel_parcel(id)[0],
+         "new_parcel_status": db.cancel_parcel(id)[6]}), 200
 
 
 @ap.route('/api/v2/parcels/<int:id>/presentLocation', methods=['PUT'])
 @token_required
 def change_present_location(current_user, id):
     if not db.is_admin(current_user.user_id):
-        return response_message('Unauthorized', 'Not enough access privileges', 403)
+        return response_message('Unauthorized', 'Not enough access privileges', 401)
     request_data = request.get_json()
     try:
         if not isinstance(request_data['current_location'], str):
@@ -193,7 +184,8 @@ def change_present_location(current_user, id):
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
             sendemail(our_user[3], 'Order Update',
                       'Hello there ' + our_user[1] + '\nYour parcels location is now ' + db.get_current_location(id))
-            return jsonify({'message': 'current location updated successfully'}), 200
+            return jsonify({'message': 'current location updated successfully',
+                            'Present Location': db.get_current_location(id)}), 200
         else:
             return jsonify({'message': 'bad request object, current location missing'}), 400
 
@@ -205,7 +197,7 @@ def change_present_location(current_user, id):
 @token_required
 def change_order_status(current_user, id):
     if not db.is_admin(current_user.user_id):
-        return response_message('Unauthorized', 'Not enough access privileges', 403)
+        return response_message('Unauthorized', 'Not enough access privileges', 401)
     request_data = request.get_json()
     try:
 
@@ -217,16 +209,16 @@ def change_order_status(current_user, id):
             return jsonify({'message': 'order not found'}), 404
         if not request_data['status'] in status:
             return jsonify(
-                {'message': "invalid status,parcels can be cancelled,delivered,in_transit,rejected,pickup_started"}), 400
+                {
+                    'message': "invalid status,parcels can be cancelled,delivered,in_transit,rejected,pickup_started"}), 400
 
         db.change_status(request_data['status'], id)
-        # TODO SEND AN EMAIL
-        return jsonify({'message': 'order status updated successfully'}), 200
+        our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+        sendemail(our_user[3], 'Order Status Update',
+                  'Hello there ' + our_user[1] + '\nYour parcels status ' + request_data['status'])
+        return jsonify({'message': 'order status updated successfully', 'new_status': request_data['status']}), 200
     except KeyError as e:
-        return response_message('error','status is missing',400)
-
-
-
+        return response_message('error', 'status is missing', 400)
 
 
 @ap.route('/api/v2/parcels/<int:id>/destination', methods=['PUT'])
@@ -238,15 +230,25 @@ def change_destination(current_user, id):
     rdata = request.get_json()
     if not "destination_address" in rdata:
         return jsonify({'message': 'Please add a new destination address'}), 400
+
     newdest = rdata['destination_address']
     if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
         return jsonify({"message": "parcel delivery request not found"}), 404
+    # CHECK SAME DESTINATION ADDRESSES
+    if str(db.get_destination_address(id)).lower() == str(newdest).lower():
+        return response_message('Forbidden', 'Not authorised to perform operation', 401)
+
     if not db.is_order_delivered(id):
         if db.is_parcel_owner(id, current_user.user_id):
-            db.change_destination(newdest, id)
-            return jsonify({'message': 'destination updated successfully'}), 200
+            our_user = db.get_user_by_value('users', 'user_id', 100)
+            sendemail(our_user[3], 'Destination Update',
+                      'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + db.change_destination(
+                          newdest, id))
+
+            return jsonify({'message': 'destination updated successfully',
+                            'new_destination': db.change_destination(newdest, id)}), 200
         else:
-            response_message('Forbidden', 'Not authorised to perform operation', 403)
+            return response_message('Forbidden', 'Not authorised to perform operation', 401)
 
     else:
         return jsonify({'message': 'order already delivered cant update'}), 403
@@ -277,20 +279,15 @@ def sendemail(email, subject, body):
         MAIL_USE_SSL=True,
         MAIL_USERNAME=os.environ.get('trulysEmail'),
         MAIL_PASSWORD=os.environ.get('trulysPass')
+
     )
     mail = Mail(app)
     try:
         message = Message(subject,
-                      sender="updates@sendit.com",
-                      recipients=[email])
+                          sender="updates@sendit.com",
+                          recipients=[email])
         message.body = body
         mail.send(message)
+        return 'mail sent'
     except Exception as identifier:
         pass
-
-def is_valid(email):
-    """helper for checking valid emails"""
-
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        return False
-    return True

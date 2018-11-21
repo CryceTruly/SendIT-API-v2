@@ -5,7 +5,7 @@ from app.auth.decorator import response, response_message, token_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
-
+from validate_email import validate_email
 from app.database.database import Database
 from app.model.models import User
 import os
@@ -24,52 +24,39 @@ def create_user():
     if request.content_type != 'application/json':
         return response_message(
             'Bad request', 'Content-type must be json type', 400)
-    detail = request.get_json()
+    request_data = request.get_json()
     try:
-        if not detail:
-            return jsonify({"Failed": "Empty request"}), 400
-        username = detail['username']
+        if not request_data:
+            return jsonify({"message": "Empty request"}), 400
+        username = request_data['username']
         str(username).replace(" ", "")
-        email = detail['email']
-        fullname = detail['fullname']
+        email = request_data['email']
+        fullname = request_data['fullname']
         if not fullname:
             return response_message('Missing', 'FullName is required', 400)
 
-        phone_number = str(detail['phone_number'])
+        phone_number = str(request_data['phone_number'])
         if len(phone_number) < 10:
             return response_message('Invalid', 'Phone Number should be atleast 10 characters', 400)
 
         if not re.match("[0-9]", phone_number):
             return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
-        if not isinstance(fullname, str):
-            return response_message('Invalid', 'Fullname should be string value', 400)
-        if not isinstance(username, str):
-            return response_message('Invalid', 'Username should be string value', 400)
-
-        if len(str(fullname)) < 2:
-            return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
-
-        if len(username) < 4:
-            return response_message('Invalid', 'Username  should be atleast 4 characters long', 400)
-        password = generate_password_hash(detail['password'])
-
+        if not isinstance(fullname, str) or not isinstance(username, str):
+            return response_message('Invalid', 'Fullname and username should be string value', 400)
+        if len(str(fullname)) < 3 or len(username) < 3:
+            return response_message('Invalid', 'FullName should be atleast 3 characters long', 400)
         if not username:
             return response_message('Missing', 'Username required', 400)
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        if not validate_email(email):
             return response_message(
                 'Error', 'Missing or wrong email format', 400)
-        if not len(detail['password']) > 5:
+        if not len(request_data['password']) > 5:
             return response_message(
                 'Failed', 'Ensure password is atleast 6 characters', 400)
-        if not isinstance(username, str):
-            return response_message(
-                'Type Error', 'username must all be string', 400)
         if db.get_user_by_value('users', 'email', email):
             return response_message(
                 'Failed', 'User with email ' + email + ' already exists', 409)
-        if db.get_user_by_value('users', 'username', username):
-            return response_message(
-                'Failed', 'User with Username ' + username + ' already exists', 409)
+        password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
         return response_message('Success', 'User account successfully created, log in', 201)
     except KeyError as e:
@@ -87,21 +74,24 @@ def login_user():
         if request.content_type != 'application/json':
             return response_message(
                 'Bad request', 'Content-type must be in json', 400)
-        detail = request.get_json()
-        if not detail:
+        request_data = request.get_json()
+        if not request_data:
             return jsonify({"Failed": "Empty request"}), 400
-        username = detail['username']
-        password = detail['password']
-        db_user = db.get_user_by_value('users', 'username', username)
+        email = request_data['email']
+        if not validate_email(email):
+            return response_message(
+                'Failed', 'email is invalid', 400)
+
+        password = request_data['password']
+        db_user = db.get_user_by_value('users', 'email', email)
         if not db_user:
             return response_message(
-                'Failed', 'username and password are invalid', 401)
+                'Failed', 'email or password is invalid', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
-        print('returned id from login '+str(new_user.user_id))
         if not check_password_hash(new_user.password, password):
-            return response_message('Failed', 'username and password are invalid', 400)
+            return response_message('Failed', 'email or password is invalid', 400)
         payload = {
 
             'exp': datetime.datetime.utcnow() +
@@ -120,14 +110,14 @@ def login_user():
             return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
     except Exception as er:
         return response_message(
-            'Failed', 'username and password are invalid', 400)
+            'Failed', 'email or password is invalid', 400)
 
 
 @auth.route('/api/v2/users', methods=['GET'])
 @token_required
 def get_users(current_user):
     if not db.is_admin(current_user.user_id):
-        return response_message('Fobidden operation', 'Only admin users can view all users', 403)
+        return response_message('Forbidden operation', 'Only admin users can view all users', 403)
     users = Database().get_users()
     user_list = []
     for user in users:
@@ -147,9 +137,9 @@ def get_users(current_user):
 @auth.route('/api/v2/users/<int:id>/parcels', methods=['GET'])
 @token_required
 def get_user_parcels(current_user, id):
-    if not current_user.is_admin:
-        if str(current_user.user_id) != str(id):
-            return response_message('Forbidden operation', 'You do not have permissions to access that', 403)
+    if not db.is_admin(current_user.user_id):
+        if current_user.user_id != id:
+            return response_message('unauthorized operation', 'You do not have permissions to access that', 401)
 
     """
     returns parcel requests created by a user given the users id
