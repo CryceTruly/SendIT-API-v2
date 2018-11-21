@@ -37,8 +37,8 @@ class TestsStart(unittest.TestCase):
         db = Database()
         self.assertTrue(db.connection)
 
-    def test_see_get_token(self):
-        self.assertTrue(get_token())
+    # def test_see_get_token(self):
+    #     self.assertTrue(get_token())
 
     def tearDown(self):
         db = Database()

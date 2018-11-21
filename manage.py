@@ -28,6 +28,7 @@ def cov():
     cov.save()
     print('Coverage Summary:')
     cov.report()
+    cov.html_report()
     cov.erase()
 
 
