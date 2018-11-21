@@ -21,15 +21,10 @@ def cov():
     cov = coverage.coverage(
         include=['app/*']
     )
-    cov.start()
-    tests = unittest.TestLoader().discover('tests')
-    unittest.TextTestRunner(verbosity=2).run(tests)
-    cov.stop()
-    cov.save()
-    print('Coverage Summary:')
-    cov.report()
-    cov.html_report()
-    cov.erase()
+
+    cov = coverage.coverage()
+
+  
 
 
 if __name__ == '__main__':

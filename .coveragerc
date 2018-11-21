@@ -12,3 +12,5 @@ omit =
     app\__init__.py
     app\database\__init__.py
     app\views\__init__.py
+    
+   

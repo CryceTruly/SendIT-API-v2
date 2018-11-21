@@ -75,6 +75,7 @@ def create_user():
         return jsonify({'Error': str(e) + ' is missing'}), 400
 
 
+
 @auth.route('/api/v2/auth/login', methods=['POST'])
 @swag_from('../doc/login.yml')
 def login_user():
@@ -90,6 +91,7 @@ def login_user():
         if not detail:
             return jsonify({"Failed": "Empty request"}), 400
         username = detail['username']
+        str(username).replace(" ","")
         password = detail['password']
         db_user = db.get_user_by_value('users', 'username', username)
         if not db_user:
@@ -194,6 +196,8 @@ def demote_user(current_user, user_id):
     return response_message('success', 'User is now a regular user', 200)
 
 
+
 @auth.route('/api/v2/auth/logout', methods=['POST'])
 def logout():
     pass
+
