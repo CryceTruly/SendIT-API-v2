@@ -1,8 +1,16 @@
 [report] 
 omit =
-    app\database\database.py  
+    app\database\database.py
+    app\auth\decorator.py
     app/util/*
-    
+    app/model/*
+    C:\Users\Chris\AppData\Roaming\Python\Python37\site-packages\colorama\ansitowin32.py   
+    C:\Users\Chris\AppData\Roaming\Python\Python37\site-packages\colorama\win32.py          
+    C:\Users\Chris\AppData\Roaming\Python\Python37\site-packages\colorama\winterm.py        
+    C:\Users\Chris\AppData\Roaming\Python\Python37\site-packages\six.py
+    tests/*
+    app\__init__.py
+    app\database\__init__.py
+    app\views\__init__.py
     
    
-

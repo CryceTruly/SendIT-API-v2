@@ -27,7 +27,8 @@ def create_user():
     try:
         if not detail:
             return jsonify({"Failed": "Empty request"}), 400
-        username = detail['username'].replace(" ","")
+        username = detail['username']
+        str(username).replace(" ", "")
         email = detail['email']
         fullname = detail['fullname']
         if not fullname:
@@ -39,14 +40,13 @@ def create_user():
 
         if not re.match("[0-9]", phone_number):
             return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
-        if not isinstance(fullname,str):
+        if not isinstance(fullname, str):
             return response_message('Invalid', 'Fullname should be string value', 400)
-        if not isinstance(username,str):
+        if not isinstance(username, str):
             return response_message('Invalid', 'Username should be string value', 400)
 
-
         if len(str(fullname)) < 2:
-               return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
+            return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
 
         if len(username) < 4:
             return response_message('Invalid', 'Username  should be atleast 4 characters long', 400)
@@ -72,7 +72,8 @@ def create_user():
         db.insert_into_user(fullname, username, email, phone_number, password)
         return response_message('Success', 'User account successfully created, log in', 201)
     except KeyError as e:
-        return jsonify({'Error': str(e) +' is missing'}),400
+        return jsonify({'Error': str(e) + ' is missing'}), 400
+
 
 
 @auth.route('/api/v2/auth/login', methods=['POST'])
@@ -90,7 +91,8 @@ def login_user():
         if not detail:
             return jsonify({"Failed": "Empty request"}), 400
         username = detail['username']
-        password=detail['password']
+        str(username).replace(" ","")
+        password = detail['password']
         db_user = db.get_user_by_value('users', 'username', username)
         if not db_user:
             return response_message(
@@ -117,8 +119,8 @@ def login_user():
         if token:
             return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
     except Exception as er:
-         return response_message(
-                'Failed', 'username and password are invalid', 400)
+        return response_message(
+            'Failed', 'username and password are invalid', 400)
 
 
 @auth.route('/api/v2/users', methods=['GET'])
@@ -194,6 +196,8 @@ def demote_user(current_user, user_id):
     return response_message('success', 'User is now a regular user', 200)
 
 
-@auth.route('/api/v2/auth/logout',methods=['POST'])
+
+@auth.route('/api/v2/auth/logout', methods=['POST'])
 def logout():
     pass
+

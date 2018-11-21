@@ -18,15 +18,13 @@ def test():
 @manager.command
 def cov():
     """Runs the unit tests with coverage."""
+    cov = coverage.coverage(
+        include=['app/*']
+    )
+
     cov = coverage.coverage()
-    cov.start()
-    tests = unittest.TestLoader().discover('tests')
-    unittest.TextTestRunner(verbosity=2).run(tests)
-    cov.stop()
-    cov.save()
-    print('Coverage Summary:')
-    cov.report()
-    cov.erase()
+
+  
 
 
 if __name__ == '__main__':
