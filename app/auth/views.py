@@ -22,12 +22,12 @@ def create_user():
         """
     if request.content_type != 'application/json':
         return response_message(
-            'Bad request', 'Content-type must be json type', 202)
+            'Bad request', 'Content-type must be json type', 400)
     detail = request.get_json()
     try:
         if not detail:
             return jsonify({"Failed": "Empty request"}), 400
-        username = detail['username']
+        username = detail['username'].replace(" ","")
         email = detail['email']
         fullname = detail['fullname']
         if not fullname:
@@ -41,12 +41,15 @@ def create_user():
             return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
         if not isinstance(fullname,str):
             return response_message('Invalid', 'Fullname should be string value', 400)
+        if not isinstance(username,str):
+            return response_message('Invalid', 'Username should be string value', 400)
+
 
         if len(str(fullname)) < 2:
                return response_message('Invalid', 'FullName should be atleaset 2 characters long', 400)
 
         if len(username) < 4:
-            return response_message('Invalid', 'UserName  should be atleaset 4 characters long', 400)
+            return response_message('Invalid', 'Username  should be atleast 4 characters long', 400)
         password = generate_password_hash(detail['password'])
 
         if not username:
@@ -60,10 +63,6 @@ def create_user():
         if not isinstance(username, str):
             return response_message(
                 'Type Error', 'username must all be string', 400)
-        if not re.match("^[a-zA-Z0-9_.]+$", username):
-            return response_message(
-                'Space Error', 'Username should not have a whitespace',
-                400)
         if db.get_user_by_value('users', 'email', email):
             return response_message(
                 'Failed', 'User with email ' + email + ' already exists', 409)
@@ -71,7 +70,7 @@ def create_user():
             return response_message(
                 'Failed', 'User with Username ' + username + ' already exists', 409)
         db.insert_into_user(fullname, username, email, phone_number, password)
-        return response_message('Success', 'User account successfully created, you can now login', 201)
+        return response_message('Success', 'User account successfully created, log in', 201)
     except KeyError as e:
         return jsonify({'Error': str(e) +' is missing'}),400
 
@@ -86,15 +85,12 @@ def login_user():
     try:
         if request.content_type != 'application/json':
             return response_message(
-                'Bad request', 'Content-type must be in json', 202)
+                'Bad request', 'Content-type must be in json', 400)
         detail = request.get_json()
         if not detail:
-            return {"Failed": "Empty request"}, 400
+            return jsonify({"Failed": "Empty request"}), 400
         username = detail['username']
-        password = detail['password']
-        if not username and not password:
-            return response_message(
-                'Failed', 'Username and password are required', 400)
+        password=detail['password']
         db_user = db.get_user_by_value('users', 'username', username)
         if not db_user:
             return response_message(
@@ -103,7 +99,7 @@ def login_user():
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[5])
         if not check_password_hash(new_user.password, password):
-            return response_message('failed', 'username and password are invalid', 401)
+            return response_message('Failed', 'username and password are invalid', 400)
         payload = {
 
             'exp': datetime.datetime.utcnow() +
@@ -119,9 +115,10 @@ def login_user():
             algorithm='HS256'
         )
         if token:
-            return jsonify({"msg": "You have successfully logged in ", "auth_token ": token.decode('UTF-8')}), 200
-    except KeyError as e:
-        return ({'KeyError': str(e)})
+            return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
+    except Exception as er:
+         return response_message(
+                'Failed', 'username and password are invalid', 400)
 
 
 @auth.route('/api/v2/users', methods=['GET'])
@@ -168,15 +165,15 @@ def get_user_parcels(current_user, id):
                     "destination_address": parcel[2],
                     "sender_email": parcel[5],
                     "recipient_email": parcel[10],
-                    "recipient_phone_number_number": parcel[7]
+                    "recipient_phone_number": parcel[7]
                 }
                 parcel_list.append(parcel_dict)
             return jsonify({"parcels": parcel_list}), 200
         except IndexError as e:
-            return jsonify({"msg": 'User does not exist'}), 404
+            return jsonify({"message": 'User does not exist'}), 404
 
     else:
-        return jsonify({"msg": 'User does not exist'}), 404
+        return jsonify({"message": 'User does not exist'}), 404
 
 
 @auth.route('/api/v2/auth/<int:user_id>/promote_user', methods=['PUT'])

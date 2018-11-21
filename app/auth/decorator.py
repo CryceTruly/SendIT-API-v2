@@ -8,8 +8,9 @@ from app.model.models import User
 
 def get_token():
     token = None
-    if 'x-access-token' in request.headers:
-        token = request.headers['x-access-token']
+    if 'Authorization' in request.headers:
+        token = request.headers['Authorization']
+        token = token.split(" ")[1]
     if not token:
         return make_response(jsonify({
             'status': 'failed',
@@ -27,10 +28,11 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization']
+            token = token.split(" ")[1]
         if not token:
-            return jsonify({"msg": "Not logged in,please login"}), 401
+            return jsonify({"message": "please login"}), 401
 
         try:
             data = jwt.decode(token, 'trulysKey')

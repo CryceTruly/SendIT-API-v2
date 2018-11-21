@@ -15,7 +15,8 @@ class User:
         self.joined = datetime.datetime.now()
 
     def __str__(self):
-        return "user: {} with email {} joined: {}".format(self.user_id, self.email, self.joined)
+        return "user: {} username:{} phonenumber:{} with email {}:isadmin:{}".format(self.user_id ,self.username,
+        self.phone_number,self.email, self.is_admin)
 
 
 class Parcel:
@@ -40,26 +41,8 @@ class Parcel:
         self.recipient_email = recipient_email
         self.recipient_phone = recipient_phone
 
-    def parcel_json(self):
-        """
-        return parcel order in dictionary format
-        """
-        return {
-            "parcel_id": self.parcel_id,
-            "destination_address": self.destination_address,
-            "pickup_address": self.pickup_address,
-            "comment_description": self.comment_description,
-            "user_id": self.user_id,
-            "sender_email": self.sender_email,
-            "status": self.status,
-            "recipient_name": self.recipient_name,
-            "weight": self.weight,
-            "current_location": self.current_location,
-            "recipient_email":self.recipient_email,
-            "recipient_phone":self.recipient_phone
-
-
-        }
+    def __str__(self):
+        return "id:{} senderemail:{} recieveremail:{} ".format(self.parcel_id,self.sender_email,self.recipient_email)
 
     def status(self):
         """

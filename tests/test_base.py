@@ -1,22 +1,24 @@
 import json
 import unittest
 from flask import Flask
-from app.model.models import Parcel
-
+from app.model.models import Parcel,User
+from app import app
+from app.auth.decorator import get_token,token_required,response_message
+from app.database.database import Database
 class TestsStart(unittest.TestCase):
-
     def setUp(self):
         self.app = app.test_client()
 
-    def test_if_can_get_users(self):
+    def test_if_cant_get_userswithouttoken(self):
         response = self.app.get('api/v2/users')
         data = json.loads(response.data.decode())
-        self.assertIn('count', data)
+        self.assertEqual(response.status_code,401)
+        self.assertEqual('please login',data['message'])
 
     def test_if_can_get_parcels(self):
         response = self.app.get('api/v2/parcels')
         data = json.loads(response.data.decode())
-        self.assertIn('count', data)
+        self.assertEqual('please login',data['message'])
 
     def test_parcel_request_not_json(self):
         """ Test order content to be posted not in json format """
@@ -37,8 +39,9 @@ class TestsStart(unittest.TestCase):
             content_type='text/html',
             data=json.dumps(expectedreq)
         )
-        self.assertEqual(result.status_code, 415)
-        self.assertIn('Content-type must be application/json', str(result.data))
+        data=json.loads(result.data.decode())
+        self.assertEqual(result.status_code, 401)
+        self.assertEqual("please login", data['message'])
 
     def test_create_user_request_not_json(self):
         """ Test order content to be posted not in json format """
@@ -58,14 +61,28 @@ class TestsStart(unittest.TestCase):
             content_type='text/html',
             data=json.dumps(expectedreq)
         )
-        self.assertEqual(result.status_code, 401)
-        self.assertIn('Content-type must be application/json', str(result.data))
+        data=json.loads(result.data.decode())
+        self.assertEqual(result.status_code, 400)
+        self.assertEqual("Content-type must be json type", data['message'])
+      
 
     def test_parcel(self):
         parcel = Parcel(2, "destination_address", "pickup_address", "parcel_description",
                  2, "sender_email@gmail.com","0789888878"
-                 "recipient@gmail.com", "name",22)
-        self.assertIn("id:1",str(parcel))
+                 "recipient@gmail.com", "name",22,10,10)
+        self.assertIn("id:2 senderemail:sender_email@gmail.com recieveremail:name",str(parcel))
+    def test_user(self):
+        user = User(11, 'crycetruly', 'crycetruly@gmail.com', '075633434432', 'password', False)
+        self.assertNotEqual(str(user),'user: 11 username:crycetruly with email crycetruly@gmail.com:isadmin:False')
+ 
+    def test_db(self):
+        db=Database()
+        self.assertTrue(db)
+    def test_db_connection(self):
+        db=Database()
+        self.assertTrue(db.connection)
+    def test_see_get_token(self):
+        self.assertTrue(get_token())
 
 if __name__ == "__main__":
     unittest.main()

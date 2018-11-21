@@ -14,35 +14,6 @@ class Helper:
         db = Database()
         self.parcels = db.get_all_parcels()
 
-    def is_valid_request(self, request_data):
-        """
-        checks if valid request parameters are sent by the user
-
-        :param request_data:
-        :return boolen:
-        """
-        keys = ["destination_address", "pickup_address", "parcel_description","recipient_phone",
-                "recipient_email","recipient_name", "weight"]
-        try:
-
-            if set(request_data).issubset(keys):
-                return True
-            return False
-        except KeyError as keyerr:
-            return response_message('Failed', str(keyerr) + 'is missing', 400)
-
-    def is_order_delivered(self, id):
-        """
-         checks that we cannot cancel an already delivered order
-        :param id:
-        :return Boolean:
-        """
-
-        for parcel in self.parcels:
-            if parcel['id'] == id:
-                if parcel['status'] == 'delivered':
-                    return True
-        return False
 
     def get_charge(self, weight, distance):
         """
@@ -82,7 +53,7 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://www.mapquestapi.com/geocoding/v1/address?key=" + self.trulysKey + "&inFormat=kvp&outFormat=json&location= " + add + "&thumbMaps=false")
+                "https://www.mapquestapi.com/geocoding/v1/address?key=" + self.trulyKey + "&inFormat=kvp&outFormat=json&location= " + add + "&thumbMaps=false")
             data = r.json()
             results = data['results'][0]
             locations = results['locations']
@@ -92,18 +63,6 @@ class Helper:
             # print('Network Error')
             return {"lat": -24.90629, "lng": 152.19168}
 
-    def is_parcel_owner(self, data, id):
-        """
-        checks if a parcel was created by loggedin user
-        :param data:
-        :param id:
-        :return:
-        """
-        user_id = data['user_id']
-        for p in self.parcels:
-            if p['user_id'] == user_id:
-                return True
-        return False
 
     def get_current_user_id(self):
 
