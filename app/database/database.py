@@ -33,7 +33,7 @@ class Database(object):
         self.connection.commit()
 
         try:
-            password=generate_password_hash('adminuser')
+            password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,username,password,phone_number,email,is_admin)
                     VALUES (100,'senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
             self.cursor.execute(sql)
@@ -63,6 +63,11 @@ class Database(object):
         self.cursor.execute(create_table)
         self.connection.commit()
 
+        create_table = """CREATE TABLE IF NOT EXISTS tokens
+              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
+              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
+        self.cursor.execute(create_table)
+        self.connection.commit()
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
@@ -271,3 +276,22 @@ class Database(object):
         self.connection.commit()
         results = self.cursor.fetchone()
         return results[0]
+
+    def save_token(self, token):
+        print('token save'+str(token))
+        query = "INSERT INTO tokens(token) VALUES ='{}'".format(str(token))
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def invalidate_a_token(self,token):
+        query = "UPDATE tokens SET is_valid  ={} WHERE token = '{}'".format(False,token)
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def is_token_invalid(self,token):
+        query = "SELECT is_valid FROM tokens WHERE token={}".format(token)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+

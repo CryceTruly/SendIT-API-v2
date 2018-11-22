@@ -26,12 +26,12 @@ class TestAuth(TestsStart):
             data=json.dumps(exp_obj)
             )
 
-    def login_user(self, username, password):
+    def login_user(self, email, password):
         """
         Method to define user login details
         """
         obj = {
-            "username": username,
+            "email": email,
             "password": password
         }
         return self.app.post(
@@ -90,7 +90,7 @@ class TestAuth(TestsStart):
             self.assertEqual(result.status_code, 400)
             data = json.loads(result.data.decode())
             self.assertEqual(data['status'],'Invalid')
-            self.assertEqual(data['message'], 'Username should be string value')
+            self.assertEqual(data['message'], 'fullname and username should be of type string')
 
     def test_spaces_in_username(self):
         """
@@ -111,7 +111,7 @@ class TestAuth(TestsStart):
                 "Cryce Truly", "","crycetruly@gmail.com", "0756778877", 'password')
             self.assertEqual(result.status_code, 400)
             data = json.loads(result.data.decode())
-            self.assertEqual(data['message'] ,'Username  should be atleast 4 characters long')
+            self.assertEqual(data['message'] ,'FullName and username should be atleast 3 characters long')
 
     def test_user_data_not_json(self):
         """
@@ -154,8 +154,8 @@ class TestAuth(TestsStart):
     def test_successful_login(self):
         with self.app:
             self.signup_user(
-                "Cryce Truly", "crycetruly", "crycetruly@gmail.com", "0756778877", 'password')
-            response = self.login_user("crycetruly", "password")
+                "Cryce Truly", "crycetruly", "crycetruly@gmail.comm", "0756778877", 'password')
+            response = self.login_user("crycetruly@gmail.comm", "password")
             res = json.loads(response.data.decode())
             self.assertEqual(response.status_code, 200)
             self.assertEqual(
@@ -166,12 +166,12 @@ class TestAuth(TestsStart):
         with self.app:
             self.signup_user(
                  "Cryce Truly", "crycetruly", "crycetruly@gmail.com", "0756778877", 'password')
-            resp = self.login_user("crycetruly", "wrongpassw")
+            resp = self.login_user("crycetruly@gmail.com", "wrongpassw")
             res = json.loads(resp.data.decode())
             self.assertEqual(resp.status_code, 400)
             self.assertEqual(res['status'],'Failed')
             self.assertEqual(
-                'username and password are invalid', str(res['message']))
+                'email or password is invalid', str(res['message']))
 
     def test_successful_signup(self):
         with self.app:
@@ -206,7 +206,7 @@ class TestAuth(TestsStart):
 
     def test_password_keyword_missing(self):
         login = {
-            "username": "my name"
+            "email": "fred@gmail.com"
         }
         rv = self.app.post(
             '/api/v2/auth/login',
@@ -215,7 +215,7 @@ class TestAuth(TestsStart):
         )
         data = json.loads(rv.data.decode())
         self.assertEqual(data['status'], "Failed")
-        self.assertEqual(data['message'], "username and password are invalid")
+        self.assertEqual(data['message'], "email or password is invalid")
         self.assertEqual(rv.status_code,400)
 
     def test_all_users_details(self):
@@ -249,7 +249,7 @@ class TestAuth(TestsStart):
         """
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("fred", "12389894")
+        response = self.login_user("fred@gmail.com", "12389894")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']
@@ -273,12 +273,10 @@ class TestAuth(TestsStart):
         data = json.loads(rs.data.decode())
         self.assertTrue(data['message'] == 'Description should be string values')
     def test_empty_request(self):
-        """
-        description and meal should be of string data type
-        """
+       
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("fred", "12389894")
+        response = self.login_user("", "")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']
@@ -302,7 +300,7 @@ class TestAuth(TestsStart):
         """
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("fred", "12389894")
+        response = self.login_user("fred@gmail.com", "12389894")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']
@@ -333,7 +331,7 @@ class TestAuth(TestsStart):
         """
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("fred", "12389894")
+        response = self.login_user("fred@gmail.com", "12389894")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']
@@ -354,7 +352,7 @@ class TestAuth(TestsStart):
         """
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("fred", "12389894")
+        response = self.login_user("fred@gmail.com", "12389894")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']

@@ -8,7 +8,9 @@ from flasgger import swag_from
 from validate_email import validate_email
 from app.database.database import Database
 from app.model.models import User
+from app.views.parcels import sendemail
 import os
+from app.auth.decorator import get_token
 
 auth = Blueprint('auth', __name__)
 db = Database()
@@ -42,12 +44,12 @@ def create_user():
         if not re.match("[0-9]", phone_number):
             return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
         if not isinstance(fullname, str) or not isinstance(username, str):
-            return response_message('Invalid', 'Fullname and username should be string value', 400)
+            return response_message('Invalid', 'fullname and username should be of type string', 400)
         if len(str(fullname)) < 3 or len(username) < 3:
-            return response_message('Invalid', 'FullName should be atleast 3 characters long', 400)
+            return response_message('Invalid', 'FullName and username should be atleast 3 characters long', 400)
         if not username:
             return response_message('Missing', 'Username required', 400)
-        if not validate_email(email):
+        if not validate_email(email=email):
             return response_message(
                 'Error', 'Missing or wrong email format', 400)
         if not len(request_data['password']) > 5:
@@ -58,6 +60,12 @@ def create_user():
                 'Failed', 'User with email ' + email + ' already exists', 409)
         password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
+        sendemail(
+            email, 'Welcome to SendIT',
+            'Hello there ' + fullname + ',\n We want to thank you for joining our platform and we love you\n'
+                                        'For any inquiries,you can dm us on twitter or reply to this email\n Have fun \nThe SendIT Team'
+        )
+
         return response_message('Success', 'User account successfully created, log in', 201)
     except KeyError as e:
         return jsonify({'Error': str(e) + ' is missing'}), 400
@@ -107,6 +115,7 @@ def login_user():
             algorithm='HS256'
         )
         if token:
+            db.save_token(token)
             return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
     except Exception as er:
         return response_message(
@@ -117,7 +126,7 @@ def login_user():
 @token_required
 def get_users(current_user):
     if not db.is_admin(current_user.user_id):
-        return response_message('Forbidden operation', 'Only admin users can view all users', 403)
+        return response_message('Forbidden operation', 'Only admin users can view all users', 401)
     users = Database().get_users()
     user_list = []
     for user in users:
@@ -170,22 +179,18 @@ def get_user_parcels(current_user, id):
 
 @auth.route('/api/v2/auth/<int:user_id>/promote_user', methods=['PUT'])
 @token_required
-def promote_user(current_user, user_id):
+def change_user_type(current_user, user_id):
+
+    if not db.is_admin(current_user.user_id):
+        return response_message('unauthorised','cant access that',401)
     if db.get_user_by_value('users', 'user_id', user_id) is None:
         return response_message('Error', 'User  does not exist', 404)
     db.update_role(user_id)
     return response_message('success', 'User is now admin', 200)
 
 
-@auth.route('/api/v2/auth/<int:user_id>/demote_user', methods=['PUT'])
-@token_required
-def demote_user(current_user, user_id):
-    if db.get_user_by_value('users', 'user_id', user_id) is None:
-        return response_message('Error', 'User does not exist', 404)
-    db.revoke_admin_previledges(user_id)
-    return response_message('success', 'User is now a regular user', 200)
-
-
 @auth.route('/api/v2/auth/logout', methods=['POST'])
-def logout():
-    pass
+@token_required
+def logout(current_user):
+    db.invalidate_a_token(get_token())
+    return response_message('success', 'you have successfully logged out', 200)

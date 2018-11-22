@@ -6,6 +6,8 @@ import jwt
 from app.database.database import Database
 from app.model.models import User
 
+database = Database()
+
 
 def get_token():
     token = None
@@ -17,6 +19,12 @@ def get_token():
             'status': 'failed',
             'message': 'Token is missing!'
         }), 401)
+    #if database.is_token_invalid(token):
+        return make_response(jsonify({
+            'status': 'token expired',
+            'message': 'Please login again!'
+        }), 401)
+
     return token
 
 
@@ -28,16 +36,9 @@ def token_required(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization']
-            token = token.split(" ")[1]
-        if not token:
-            return jsonify({"message": "please login"}), 401
-
+        token = get_token()
         try:
             data = jwt.decode(token, os.environ.get('trulysKey'),)
-            database = Database()
             query = database.get_user_by_value(
                 'users', 'user_id', data['user_id']
             )
