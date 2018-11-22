@@ -279,7 +279,7 @@ class Database(object):
 
     def save_token(self, token):
         print('token save'+str(token))
-        query = "INSERT INTO tokens(token) VALUES ='{}'".format(str(token))
+        query = "INSERT INTO tokens(token) VALUES = '{}'".format(str(token))
         self.cursor.execute(query)
         self.connection.commit()
 
