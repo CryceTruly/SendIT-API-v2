@@ -71,6 +71,7 @@ def create_user():
         return jsonify({'Error': str(e) + ' is missing'}), 400
 
 
+
 @auth.route('/api/v2/auth/login', methods=['POST'])
 @swag_from('../doc/login.yml')
 def login_user():

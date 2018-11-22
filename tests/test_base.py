@@ -12,7 +12,6 @@ class TestsStart(unittest.TestCase):
         self.app = app.test_client()
         db = Database()
         db.create_tables()
-
     def test_if_cant_get_userswithouttoken(self):
         response = self.app.get('api/v2/users')
         data = json.loads(response.data.decode())

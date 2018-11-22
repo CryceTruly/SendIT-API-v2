@@ -1,6 +1,7 @@
 from app.database.database import Database
 from app.model.models import User
-from flask import Flask, json
+from flask import Flask
+import json
 from app.model.models import Parcel, User
 from tests.test_base import TestsStart
 
@@ -8,8 +9,6 @@ db = Database()
 
 
 class TestAuth(TestsStart):
-    pass
-
     def signup_user(self, fullname, username, email, phone_number, password):
         """
         Method to define user registration details
@@ -94,14 +93,10 @@ class TestAuth(TestsStart):
             self.assertEqual(data['message'], 'fullname and username should be of type string')
 
     def test_spaces_in_username(self):
-        """
-        Test if a white spaces between characters get replaced as account creates
-        """
         with self.app:
             result = self.signup_user(
                 "Cryce Truly", "cryce truly", "crycetruly@gmail.com", "0756778877", 'password')
             self.assertEqual(result.status_code, 201)
-
     def test_username_not_provided(self):
         """
         Test username field left empty
@@ -223,6 +218,7 @@ class TestAuth(TestsStart):
             self.assertEqual(result.status_code, 201)
             res = json.loads(result.data.decode())
             self.assertTrue(res['status'] == 'Success')
+
 
             users = Database().get_users()
             user_dict = {
@@ -368,14 +364,7 @@ class TestAuth(TestsStart):
             headers=dict(Authorization='Bearer' " " + token),
             data=json.dumps(ord)
         )
-        self.assertEqual(rs.status_code, 201)
-        nrs = self.app.get(
-            '/api/v2/users/1/parcels',
-            content_type="application/json",
-            headers=dict(Authorization='Bearer' " " + token),
-            data=json.dumps(ord)
-        )
-        self.assertEqual(nrs.status_code, 200)
+        self.assertEqual(rs.status_code, 200)
 
     def test_user_cant_view_users(self):
         self.signup_user(
