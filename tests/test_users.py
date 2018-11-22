@@ -185,8 +185,8 @@ class TestAuth(TestsStart):
             '/api/v2/parcels',
             headers=dict(Authorization='Bearer ywjjkjkjkwe'))
         data = json.loads(res.data.decode())
-        self.assertEqual("Signature is invalid,please login again", data['message'])
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual("please login", data['message'])
+        self.assertEqual(res.status_code, 401)
 
     def test_missing_username_keyword(self):
         obj = {
@@ -276,7 +276,7 @@ class TestAuth(TestsStart):
        
         self.signup_user(
                 "Greg Fred","fred", "fred@gmail.com", "0756432356", "12389894")
-        response = self.login_user("", "")
+        response = self.login_user("fred@gmail.com", "12389894")
         res = json.loads(response.data.decode())
         self.assertTrue(res['auth_token'])
         token = res['auth_token']
@@ -341,10 +341,10 @@ class TestAuth(TestsStart):
             headers=dict(Authorization='Bearer' " " + token),
             data=""
             )
-        self.assertEqual(rs.status_code, 403)
+        self.assertEqual(rs.status_code, 401)
         data = json.loads(rs.data.decode())
         self.assertTrue(data['message'] == 'Only admin users can view all orders')
-        self.assertTrue(data['status'] == 'Forbidden operation')
+        self.assertTrue(data['status'] == 'unauthorized operation')
 
     def test_should_notview_other_parcels(self):
         """

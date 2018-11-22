@@ -35,4 +35,3 @@ class TestsParcel(TestsStart):
         )
         data=json.loads(result.data.decode())
         self.assertEqual(result.status_code, 401)
-        self.assertEqual("please login", data['message'])
