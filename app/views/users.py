@@ -1,7 +1,7 @@
 import jwt
 import re
 import datetime
-from app.auth.decorator import response, response_message, token_required
+from app.auth.decorator import response_message, token_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, request, jsonify
 from flasgger import swag_from
@@ -39,10 +39,10 @@ def create_user():
 
         phone_number = str(request_data['phone_number'])
         if len(phone_number) < 10:
-            return response_message('Invalid', 'Phone Number should be atleast 10 characters', 400)
+            return response_message('Invalid', 'phone number should be atleast 10 characters long', 400)
 
         if not re.match("[0-9]", phone_number):
-            return response_message('Invalid', 'Phone Number should not contain letters ex.075+++++++', 400)
+            return response_message('Invalid', 'phone number should not contain letters', 400)
         if not isinstance(fullname, str) or not isinstance(username, str):
             return response_message('Invalid', 'fullname and username should be of type string', 400)
         if len(str(fullname)) < 3 or len(username) < 3:
@@ -125,7 +125,7 @@ def login_user():
 @token_required
 def get_users(current_user):
     if not db.is_admin(current_user.user_id):
-        return response_message('Forbidden operation', 'Only admin users can view all users', 401)
+        return response_message('unauthorized operation', 'Only admin users can view all users', 401)
     users = Database().get_users()
     user_list = []
     for user in users:
