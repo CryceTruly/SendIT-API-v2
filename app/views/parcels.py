@@ -55,7 +55,7 @@ def get_a_parcel(current_user, id):
     """
     if not db.is_admin(current_user.user_id):
         if str(current_user.user_id) != str(id):
-            return response_message('Forbidden operation', 'You do not have permissions to access that', 403)
+            return response_message('unauthorized operation', 'You do not have enough permissions to access that', 401)
     if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
         return jsonify({"message": "parcel delivery request order not found"}), 404
     results = db.get_parcel_by_value('parcels', 'parcel_id', id)
@@ -172,7 +172,7 @@ def cancel_parcel_request(current_user, id):
 @token_required
 def change_present_location(current_user, id):
     if not db.is_admin(current_user.user_id):
-        return response_message('Unauthorized', 'Not enough access privileges', 401)
+        return response_message('Unauthorized', 'Not enough access previleges', 401)
     request_data = request.get_json()
     try:
         if not isinstance(request_data['current_location'], str):
