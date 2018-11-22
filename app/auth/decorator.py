@@ -1,9 +1,12 @@
+import os
 from functools import wraps
 from flask import request, jsonify, make_response
 import jwt
 
 from app.database.database import Database
 from app.model.models import User
+
+
 
 
 def get_token():
@@ -16,6 +19,12 @@ def get_token():
             'status': 'failed',
             'message': 'Token is missing!'
         }), 401)
+    #if database.is_token_invalid(token):
+        return make_response(jsonify({
+            'status': 'token expired',
+            'message': 'Please login again!'
+        }), 401)
+
     return token
 
 
@@ -27,29 +36,23 @@ def token_required(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization']
-            token = token.split(" ")[1]
-        if not token:
-            return jsonify({"message": "please login"}), 401
-
+        token = get_token()
         try:
-            data = jwt.decode(token, 'trulysKey')
             database = Database()
+            data = jwt.decode(token, os.environ.get('trulysKey'),)
             query = database.get_user_by_value(
-                'users', data['user_id'], data['user_id']
+                'users', 'user_id', data['user_id']
             )
             if not query:
                 return {"message": "User does not exist"}, 400
             current_user = User(
                 query[0], query[1], query[2], query[3], query[4], query[5])
         except jwt.ExpiredSignatureError as e:
-            return response_message('Error', 'Signature expired,please login again', 403)
+            return response_message('Error', 'Signature expired,please login again', 401)
         except jwt.InvalidSignatureError as serr:
-            return response_message('Error', 'Signature is invalid,please login again', 403)
+            return response_message('Error', 'Signature is invalid,please login again', 401)
         except jwt.DecodeError:
-            return response_message('Error', 'Signature is invalid,please login again', 403)
+            return response_message('Error', 'please login', 401)
 
         return f(current_user, *args, **kwargs)
 

@@ -9,20 +9,20 @@ from app.database.database import Database
 
 class Helper:
     def __init__(self):
-        self.base_price = 2
+        self.base_price = 3
         self.trulyKey = os.environ.get('trulysKey')
         db = Database()
         self.parcels = db.get_all_parcels()
 
-
-    def get_charge(self, weight, distance):
+    def get_charge(self, weight, distance,quantity):
         """
         calculates the charge
         :param weight:
         :param distance:
+        :param distance
         :return:
         """
-        return self.base_price + (weight * distance)
+        return self.base_price + (weight * distance * quantity)
 
     def get_distance(self, point1, point2):
         """
@@ -61,14 +61,13 @@ class Helper:
             return latlng
         except Exception as identifier:
             # print('Network Error')
-            return {"lat": -24.90629, "lng": 152.19168}
-
+            return {"lat": -0.90629, "lng": 27.19168}
 
     def get_current_user_id(self):
 
         try:
             token = get_token()
-            data = jwt.decode(token, 'trulysSecret')
+            data = jwt.decode(token, os.environ.get('trulysKey'))
             return data['user_id']
 
 

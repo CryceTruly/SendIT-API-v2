@@ -1,4 +1,6 @@
 import psycopg2
+import json
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Database(object):
@@ -10,10 +12,10 @@ class Database(object):
             """
             creates a db
             """
-           # conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
+            # conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
 
             self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
-            #self.connection=psycopg2.connect(conn_string)
+            # self.connection=psycopg2.connect(conn_string)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -30,6 +32,15 @@ class Database(object):
         self.cursor.execute(create_table)
         self.connection.commit()
 
+        try:
+            password = generate_password_hash('adminuser')
+            sql = """INSERT INTO users(user_id,username,password,phone_number,email,is_admin)
+                    VALUES (100,'senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
+            self.cursor.execute(sql)
+            self.connection.commit()
+        except Exception as ex:
+            return str(ex)
+
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(user_id),
@@ -44,14 +55,19 @@ class Database(object):
             current_location VARCHAR (255),
             recipient_email VARCHAR (255),
             recipient_phone VARCHAR (255),
-            pickplatlng TEXT,
-            destlatlng TEXT ,
+            pickplatlng json,
+            destlatlng json ,
             distance DOUBLE PRECISION,
             price DOUBLE PRECISION,
             created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,last_modified DATE DEFAULT CURRENT_TIMESTAMP)"""
         self.cursor.execute(create_table)
         self.connection.commit()
 
+        create_table = """CREATE TABLE IF NOT EXISTS tokens
+              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
+              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
+        self.cursor.execute(create_table)
+        self.connection.commit()
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
@@ -65,7 +81,7 @@ class Database(object):
         self.connection.commit()
 
     def insert_into_parcels(self, destination_address, pickup_address, parcel_description, user_id, sender_email,
-                            recipient_phone, recipient_email, recipient_name, weight,qty, latlng, destlatlng, distance,
+                            recipient_phone, recipient_email, recipient_name, weight, qty, latlng, destlatlng, distance,
                             price):
         """
         Query to add parcel order to the database : by user
@@ -75,7 +91,8 @@ class Database(object):
                      recipient_email, recipient_name, weight,qty,current_location,pickplatlng,destlatlng,distance,price)
                     VALUES('{}','{}','{}','{}','{}','{}','{}','{}',{},{} ,'{}','{}','{}',{},{}); """.format(
             destination_address, pickup_address, parcel_description, user_id, sender_email, recipient_phone,
-            recipient_email, recipient_name, weight,qty, pickup_address,str(24), str(24), distance, price)
+            recipient_email, recipient_name, weight, qty, pickup_address, json.dumps(latlng), json.dumps(destlatlng),
+            distance, price)
         self.cursor.execute(order_query)
         self.connection.commit()
 
@@ -84,6 +101,7 @@ class Database(object):
         Query gets all parcel-orders that are available
         :admin
         """
+
         self.cursor.execute("SELECT * FROM parcels")
         all_parcels = self.cursor.fetchall()
         parcel_list = []
@@ -166,6 +184,7 @@ class Database(object):
                     WHERE user_id ='{}' """.format(True, id)
         self.cursor.execute(query)
         self.connection.commit()
+
     def revoke_admin_previledges(self, id):
         query = """UPDATE users SET is_admin = {}
                     WHERE user_id ='{}' """.format(False, id)
@@ -176,6 +195,7 @@ class Database(object):
         query = "UPDATE parcels SET destination_address = '{}' WHERE parcel_id ={};".format(new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
+        return new_value
 
     def delete_table_column(self, table_name, table_colum, id):
         delete_query = "DELETE from {} WHERE {} = '{}';".format(
@@ -209,11 +229,11 @@ class Database(object):
         for table in tables:
             self.cursor.execute(drop_query.format(table))
 
-    def is_admin(self,user_id):
-        sql="SELECT is_admin from users WHERE user_id ={}".format(user_id)
+    def is_admin(self, user_id):
+        sql = "SELECT is_admin from users WHERE user_id ={}".format(user_id)
         self.cursor.execute(sql)
         self.connection.commit()
-        results=self.cursor.fetchone()
+        results = self.cursor.fetchone()
         return results[0]
 
     def get_user_email(self, user_id):
@@ -229,10 +249,11 @@ class Database(object):
         self.connection.commit()
 
     def new_parcel_has_fishy_behaviour(self, user_id, reciever_email, desc):
-        sql="SELECT * FROM parcels WHERE user_id = {} AND recipient_email= '{}' and parcel_description = '{}'".format(user_id,reciever_email,desc)
+        sql = "SELECT * FROM parcels WHERE user_id = {} AND recipient_email= '{}' and parcel_description = '{}'".format(
+            user_id, reciever_email, desc)
         self.cursor.execute(sql)
         self.connection.commit()
-        results=self.cursor.fetchall()
+        results = self.cursor.fetchall()
         return results
 
     def get_current_location(self, id):
@@ -244,6 +265,31 @@ class Database(object):
 
     def get_parce_owner_id(self, id):
         query = "SELECT user_id FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+
+    def get_destination_address(self, id):
+        query = "SELECT destination_address FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+
+    def save_token(self, token):
+        print('token save'+str(token))
+        query = "INSERT INTO tokens(token) VALUES = '{}'".format(str(token))
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def invalidate_a_token(self,token):
+        query = "UPDATE tokens SET is_valid  ={} WHERE token = '{}'".format(False,token)
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def is_token_invalid(self,token):
+        query = "SELECT is_valid FROM tokens WHERE token={}".format(token)
         self.cursor.execute(query)
         self.connection.commit()
         results = self.cursor.fetchone()

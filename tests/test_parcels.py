@@ -1,10 +1,4 @@
 import json
-import unittest
-from app import *
-import requests
-
-from app.database.database import Database
-from app.model.models import User
 from tests.test_base import TestsStart
 
 
@@ -36,4 +30,3 @@ class TestsParcel(TestsStart):
         data=json.loads(result.data.decode())
         self.assertEqual(result.status_code, 401)
         self.assertEqual("please login", data['message'])
-     
