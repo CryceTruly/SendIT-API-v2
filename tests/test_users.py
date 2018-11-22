@@ -364,7 +364,15 @@ class TestAuth(TestsStart):
             headers=dict(Authorization='Bearer' " " + token),
             data=json.dumps(ord)
         )
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, 201)
+
+        rs2 = self.app.get(
+            '/api/v2/parcels',
+            content_type="application/json",
+            headers=dict(Authorization='Bearer' " " + token),
+            data=json.dumps(ord)
+        )
+        self.assertEqual(rs2.status_code,401)
 
     def test_user_cant_view_users(self):
         self.signup_user(
