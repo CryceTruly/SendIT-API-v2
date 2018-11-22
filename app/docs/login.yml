@@ -1,0 +1,13 @@
+Login
+---
+tags:
+  - Authentication
+parameters:
+  - in: body
+    name: body
+    required: true
+    type: json object
+    description: login 
+responses: 
+  200:
+     description: you looged in good
