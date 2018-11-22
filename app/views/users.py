@@ -49,7 +49,7 @@ def create_user():
             return response_message('Invalid', 'FullName and username should be atleast 3 characters long', 400)
         if not username:
             return response_message('Missing', 'Username required', 400)
-        if not validate_email(email=email):
+        if not validate_email(email):
             return response_message(
                 'Error', 'Missing or wrong email format', 400)
         if not len(request_data['password']) > 5:
@@ -106,7 +106,7 @@ def login_user():
                    datetime.timedelta(days=0, hours=23),
             'email': new_user.email,
             'user_id': new_user.user_id,
-            'user_name': new_user.username,
+            'email': new_user.email,
             'is_admin': new_user.is_admin
         }
         token = jwt.encode(
@@ -115,7 +115,6 @@ def login_user():
             algorithm='HS256'
         )
         if token:
-            db.save_token(token)
             return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
     except Exception as er:
         return response_message(
