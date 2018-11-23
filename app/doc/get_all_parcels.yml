@@ -1,0 +1,20 @@
+All Parcels
+---
+tags:
+  -  All Parcels
+responses:
+  200:
+    description: Retrieves all parcels posted
+
+  404:
+    description: The applications has no parcels to show
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT
+
+            

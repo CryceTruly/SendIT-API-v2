@@ -1,0 +1,33 @@
+Status
+---
+tags:
+  -  Change a a status of a parcel delivery order when it changes
+parameters:
+  - name: body
+    description: An admin user updates  parcel status
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+        - "status"
+      properties:
+        new_destination:
+          type: "string"
+          example: "delivered"
+
+responses:
+  200:
+    description: successfully updates a status
+
+  401:
+    description: A user may not have enough previledges
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT

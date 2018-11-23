@@ -6,7 +6,7 @@ from flask_mail import Message, Mail
 import os
 from app.auth.decorator import response_message, token_required
 from validate_email import validate_email
-
+from flasgger import swag_from
 from app.util.helper import Helper
 
 ap = Blueprint('parcels', __name__)
@@ -23,6 +23,7 @@ def welcome(current_user):
 
 @ap.route('/api/v2/parcels')
 @token_required
+@swag_from('../doc/get_all_parcels.yml')
 def get_parcels(current_user):
     if not db.is_admin(current_user.user_id):
         return response_message('unauthorized operation', 'Only admin users can view all orders', 401)
@@ -47,6 +48,7 @@ def get_parcels(current_user):
 # GET parcels/id
 @ap.route('/api/v2/parcels/<int:id>')
 @token_required
+@swag_from('../doc/get_a_parcel.yml')
 def get_a_parcel(current_user, id):
     """
     return order request details for a specific order
@@ -87,11 +89,8 @@ def get_a_parcel(current_user, id):
 # POST parcels
 @ap.route('/api/v2/parcels', methods=['POST'])
 @token_required
+@swag_from('../doc/new_parcel.yml')
 def add_parcel(current_user):
-    """
-    creates a new parcel order
-    :return:
-    """
     if not request.content_type == 'application/json':
         return jsonify({"failed": 'Content-type must be application/json'}), 415
     request_data = request.get_json()
@@ -151,7 +150,9 @@ def add_parcel(current_user):
 
 # PUT /parcels/<parcelId>/cancel
 @ap.route('/api/v2/parcels/<int:id>/cancel', methods=['PUT'])
+@swag_from('../doc/cancel_parcell.yml')
 @token_required
+
 def cancel_parcel_request(current_user, id):
     '''
     cancels a specific request given its identifier
@@ -170,6 +171,7 @@ def cancel_parcel_request(current_user, id):
 
 @ap.route('/api/v2/parcels/<int:id>/presentLocation', methods=['PUT'])
 @token_required
+@swag_from('../doc/change_present_locationn.yml')
 def change_present_location(current_user, id):
     if not db.is_admin(current_user.user_id):
         return response_message('Unauthorized', 'Not enough access previleges', 401)
@@ -195,6 +197,7 @@ def change_present_location(current_user, id):
 
 @ap.route('/api/v2/parcels/<int:id>/status', methods=['PUT'])
 @token_required
+@swag_from('../doc/status.yml')
 def change_order_status(current_user, id):
     if not db.is_admin(current_user.user_id):
         return response_message('Unauthorized', 'Not enough access privileges', 401)
@@ -223,10 +226,8 @@ def change_order_status(current_user, id):
 
 @ap.route('/api/v2/parcels/<int:id>/destination', methods=['PUT'])
 @token_required
+@swag_from('../doc/changedestination.yml')
 def change_destination(current_user, id):
-    '''
-    changes destination address
-    '''
     rdata = request.get_json()
     if not "destination_address" in rdata:
         return jsonify({'message': 'Please add a new destination address'}), 400
@@ -255,9 +256,6 @@ def change_destination(current_user, id):
 
 
 def not_validresponse():
-    '''
-    helper to refactor similar response
-    '''
     return jsonify({"error": 'Bad Request object,expected data is missing'}), 400
 
 
