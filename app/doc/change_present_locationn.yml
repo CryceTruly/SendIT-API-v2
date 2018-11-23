@@ -1,0 +1,33 @@
+location
+---
+tags:
+  -  Change a parcels current location
+parameters:
+  - name: body
+    description: Updates the application with a new location of a parcel when it changes/in transit
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+        - "current_location"
+      properties:
+        status:
+          type: "string"
+          example: "Kampala"
+responses:
+  200:
+    description: a user successfully updates a parcel location
+
+  401:
+    description: a user has no enough previledges to change a location
+
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT

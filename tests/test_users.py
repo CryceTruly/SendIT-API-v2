@@ -219,7 +219,6 @@ class TestAuth(TestsStart):
             res = json.loads(result.data.decode())
             self.assertTrue(res['status'] == 'Success')
 
-
             users = Database().get_users()
             user_dict = {
                 "user_id": 1,
@@ -496,3 +495,183 @@ class TestAuth(TestsStart):
             data2 = json.loads(rs.data.decode())
             self.assertIn('users',data2)
             self.assertEqual(rs.status_code, 200)
+
+    def test_correct_welcome_msg(self):
+        with self.app:
+            res2 = self.login_user('admin@sendit.com', 'adminuser')
+            data = json.loads(res2.data.decode())
+            token = data['auth_token']
+            rs = self.app.get(
+                '/',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token)
+            )
+            data2 = json.loads(rs.data.decode())
+            self.assertEqual(data2['message'], 'Welcome to the sendit api v2')
+            self.assertEqual(rs.status_code, 200)
+
+    def test_parcels_get_returned(self):
+        with self.app:
+            res = self.login_user('admin@sendit.com', 'adminuser')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            expectedreq = {
+                "recipient_name": "Aron Mike",
+                "parcel_description": "Here are my stuff",
+                "weight":90,
+                "quantity": 22,
+                "pickup_address":"Mukono",
+                "destination_address":"Entebbe",
+                "recipient_phone_number":"0767878787",
+                "recipient_email":"rme@gmail.com"
+            }
+            self.app.post(
+                '/api/v2/parcels',
+                content_type='application/json',
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(expectedreq))
+            rs = self.app.get(
+                '/api/v2/parcels',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token)
+            )
+            data = json.loads(rs.data.decode())
+            self.assertIn('parcels', data)
+
+    def test_cant_get_parcelsifnotadmin(self):
+        with self.app:
+            self.signup_user(
+                "Cryce TrulyTest", "TrulyTest", "TrulyTest@gmail.com", "0756778877", 'pasTrulyTestsword')
+            res = self.login_user('TrulyTest@gmail.com', 'pasTrulyTestsword')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            rs = self.app.get(
+                '/api/v2/parcels',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token)
+            )
+            data = json.loads(rs.data.decode())
+            self.assertEqual(rs.status_code, 401)
+            self.assertEqual(data['status'], 'unauthorized operation')
+
+    def test_cant_get_a_correct_parcelnotfound_message(self):
+        with self.app:
+            res = self.login_user('admin@sendit.com', 'adminuser')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            rs = self.app.get(
+                '/api/v2/parcels/222222222222',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token)
+            )
+            data = json.loads(rs.data.decode())
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(
+                data['message'], 'parcel delivery request order not found')
+
+    def test_cant_cancel_unknown_order(self):
+        with self.app:
+            self.signup_user(
+                "Cryce TrulyTest", "TrulyTest", "TrulyTest@gmail.com", "0756778877", 'pasTrulyTestsword')
+            res = self.login_user('TrulyTest@gmail.com', 'pasTrulyTestsword')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            rs = self.app.put(
+                '/api/v2/parcels/1111/cancel',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token)
+            )
+            data = json.loads(rs.data.decode())
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(
+                data['message'], 'parcel delivery request not found')
+
+    def test_user_cant_changepresent_location(self):
+        with self.app:
+            self.signup_user(
+                "Cryce TrulyTest", "TrulyTest", "TrulyTest@gmail.com", "0756778877", 'pasTrulyTestsword')
+            res = self.login_user('TrulyTest@gmail.com', 'pasTrulyTestsword')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            od = {
+                "current_location": "here"
+            }
+            rs = self.app.put(
+                '/api/v2/parcels/1/presentLocation',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(od)
+            )
+            data2 = json.loads(rs.data.decode())
+            self.assertEqual(rs.status_code, 401)
+            self.assertEqual(data2['message'], 'Not enough access previleges')
+            self.assertEqual(data2['status'], 'Unauthorized')
+
+    def test_user_cant_updatewithempty_object(self):
+        with self.app:
+            self.signup_user(
+                "Cryce TrulyTest", "TrulyTest", "TrulyTest@gmail.com", "0756778877", 'pasTrulyTestsword')
+            res = self.login_user('TrulyTest@gmail.com', 'pasTrulyTestsword')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            expectedreq = {
+                "recipient_name": "Aron Mike",
+                "parcel_description": "Here are my stuff",
+                "weight":90,
+                "quantity": 22,
+                "pickup_address":"Mukono",
+                "destination_address":"Entebbe",
+                "recipient_phone_number":"0767878787",
+                "recipient_email":"rme@gmail.com"
+            }
+            self.app.post(
+                '/api/v2/parcels',
+                content_type='application/json',
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(expectedreq))
+            od = {
+
+            }
+            rs = self.app.put(
+                '/api/v2/parcels/1/presentLocation',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(od)
+            )
+            data2 = json.loads(rs.data.decode())
+            self.assertIn('message', data2)
+
+    def test_user_can_successfully_update_destination(self):
+        with self.app:
+            self.signup_user(
+                "Cryce TrulyTest", "TrulyTest", "TrulyTest@gmail.com", "0756778877", 'pasTrulyTestsword')
+            res=self.login_user('TrulyTest@gmail.com', 'pasTrulyTestsword')
+            data = json.loads(res.data.decode())
+            token = data['auth_token']
+            expectedreq = {
+                "recipient_name": "Aron Mike",
+                "parcel_description": "Here are my stuff",
+                "weight":90,
+                "quantity": 22,
+                "pickup_address":"Mukono",
+                "destination_address":"Entebbe",
+                "recipient_phone_number":"0767878787",
+                "recipient_email":"rme@gmail.com"
+            }
+            self.app.post(
+                '/api/v2/parcels',
+                content_type='application/json',
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(expectedreq))
+            od = {
+                     "destination_address":"Mbale"
+            }
+            rs = self.app.put(
+                '/api/v2/parcels/10101/destination',
+                content_type="application/json",
+                headers=dict(Authorization='Bearer' " " + token),
+                data=json.dumps(od)
+            )
+            data2 = json.loads(rs.data.decode())
+            self.assertEqual(data2['message'], 'parcel delivery request not found')
+            self.assertEqual(rs.status_code,404)

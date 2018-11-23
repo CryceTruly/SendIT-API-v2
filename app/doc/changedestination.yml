@@ -1,0 +1,33 @@
+Destination
+---
+tags:
+  -  Change a destination of a parcel delivery order
+parameters:
+  - name: body
+    description: A user updates  parcel destination
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+        - "new_destination"
+      properties:
+        new_destination:
+          type: "string"
+          example: "Kampa"
+
+responses:
+  200:
+    description: successfully updates a destination
+
+  401:
+    description: A user may not have enough previledges
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT

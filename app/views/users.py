@@ -145,18 +145,13 @@ def get_users(current_user):
 
 @auth.route('/api/v2/users/<int:id>/parcels', methods=['GET'])
 @token_required
+@swag_from('../doc/user_parcels.yml')
 def get_user_parcels(current_user, id):
     if not db.is_admin(current_user.user_id):
         if current_user.user_id != id:
             return response_message('unauthorized operation', 'You do not have permissions to access that', 401)
-
-    """
-    returns parcel requests created by a user given the users id
-    """
-
     if not db.get_user_by_value('users', 'user_id', id) is None:
         try:
-
             parcel_list = []
             for parcel in db.get_user_parcels(id):
                 parcel_dict = {

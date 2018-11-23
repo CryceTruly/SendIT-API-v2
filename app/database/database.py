@@ -1,7 +1,7 @@
 import psycopg2
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import os
 
 class Database(object):
     """class for the database"""
@@ -12,10 +12,10 @@ class Database(object):
             """
             creates a db
             """
-            # conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
-
+            dbname=os.environ.get('dbname')
+            user=os.environ.get('dbuser')
+            user_pass=os.environ.get('user_pass')
             self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
-            # self.connection=psycopg2.connect(conn_string)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -33,6 +33,11 @@ class Database(object):
         self.connection.commit()
 
         try:
+            create_table = """CREATE TABLE IF NOT EXISTS tokens
+              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
+              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
+            self.cursor.execute(create_table)
+            self.connection.commit()
             password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,username,password,phone_number,email,is_admin)
                     VALUES (100,'senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
@@ -63,11 +68,7 @@ class Database(object):
         self.cursor.execute(create_table)
         self.connection.commit()
 
-        create_table = """CREATE TABLE IF NOT EXISTS tokens
-              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
-              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
-        self.cursor.execute(create_table)
-        self.connection.commit()
+        
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
