@@ -103,10 +103,18 @@ def add_parcel(current_user):
 
         if len(str(request_data['parcel_description'])) < 5:
             return jsonify({"message": "Your Parcel description should be atleast 5 characters"}), 400
+        if len(str(request_data['destination_address'])) < 5:
+            return jsonify({"message": "Your destination_address should be atleast 5 characters"}), 400
+        if len(str(request_data['pickup_address'])) < 5:
+            return jsonify({"message": "Your pickup_addresss should be atleast 5 characters"}), 400
         if not isinstance(request_data['parcel_description'], str):
             return jsonify({"message": "Description should be string values"}), 400
         if not isinstance(request_data['pickup_address'], str):
             return jsonify({"message": "pickup_address should be string values"}), 400
+        if len(str(request_data['pickup_address'])) < 5:
+            return jsonify({"message": "Your pickup_addresss should be atleast 5 characters"}), 400
+
+        
 
         if not isinstance(request_data['destination_address'], str):
             return jsonify({"message": "destination_address should be string values"}), 400

@@ -152,7 +152,6 @@ def get_user_parcels(current_user, id):
             return response_message('unauthorized operation', 'You do not have permissions to access that', 401)
     if not db.get_user_by_value('users', 'user_id', id) is None:
         try:
-
             parcel_list = []
             for parcel in db.get_user_parcels(id):
                 parcel_dict = {
