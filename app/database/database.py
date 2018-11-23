@@ -15,7 +15,7 @@ class Database(object):
             dbname=os.environ.get('dbname')
             user=os.environ.get('dbuser')
             user_pass=os.environ.get('user_pass')
-            self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
+            self.connection = psycopg2.connect("dbname={} user={} password={}".format(dbname,user,user_pass))
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -33,6 +33,11 @@ class Database(object):
         self.connection.commit()
 
         try:
+            create_table = """CREATE TABLE IF NOT EXISTS tokens
+              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
+              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
+            self.cursor.execute(create_table)
+            self.connection.commit()
             password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,username,password,phone_number,email,is_admin)
                     VALUES (100,'senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
@@ -63,11 +68,7 @@ class Database(object):
         self.cursor.execute(create_table)
         self.connection.commit()
 
-        create_table = """CREATE TABLE IF NOT EXISTS tokens
-              (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
-              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
-        self.cursor.execute(create_table)
-        self.connection.commit()
+        
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
