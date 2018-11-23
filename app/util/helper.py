@@ -57,7 +57,7 @@ class Helper:
             data = r.json()
             results = data['results'][0]
             locations = results['locations']
-            latlng = locations[0].get('latLng')
+            latlng = locations[0].get('latLng') 
             return latlng
         except Exception as identifier:
             # print('Network Error')

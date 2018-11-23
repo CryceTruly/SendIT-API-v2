@@ -15,7 +15,7 @@ class Database(object):
             dbname=os.environ.get('dbname')
             user=os.environ.get('dbuser')
             user_pass=os.environ.get('user_pass')
-            self.connection = psycopg2.connect("dbname={} user={} password={}".format(dbname,user,user_pass))
+            self.connection = psycopg2.connect("dbname=sendit user=postgres password=crycetruly")
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
