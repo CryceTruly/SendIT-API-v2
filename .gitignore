@@ -5,3 +5,6 @@ app/__pycache__/
 __pycache__/
 coverage
 .pytest_cache
+app/__init__.pyc
+app/views/__init__.pyc
+app/views/parcels.pyc
