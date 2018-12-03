@@ -62,14 +62,14 @@ def create_user():
         db.insert_into_user(fullname, username, email, phone_number, password)
         sendemail(
             email, 'Welcome to SendIT',
-            'Hello there ' + fullname + ',\n We want to thank you for joining our platform and we love you\n'
+            'Hello there ' + fullname +
+                ',\n We want to thank you for joining our platform and we love you\n'
                                         'For any inquiries,you can dm us on twitter or reply to this email\n Have fun \nThe SendIT Team'
         )
 
         return response_message('Success', 'User account successfully created, log in', 201)
     except KeyError as e:
         return jsonify({'Error': str(e) + ' is missing'}), 400
-
 
 
 @auth.route('/api/v2/auth/login', methods=['POST'])
@@ -178,11 +178,36 @@ def get_user_parcels(current_user, id):
 def change_user_type(current_user, user_id):
 
     if not db.is_admin(current_user.user_id):
-        return response_message('unauthorised','cant access that',401)
+        return response_message('unauthorised', 'cant access that', 401)
     if db.get_user_by_value('users', 'user_id', user_id) is None:
         return response_message('Error', 'User  does not exist', 404)
     db.update_role(user_id)
     return response_message('success', 'User is now admin', 200)
+
+
+# GET parcels/id
+@ap.route('/api/v2/users/<int:id>')
+@token_required
+@swag_from('../doc/get_user.yml')
+def get_a_parcel(current_user, id):
+    """
+    return order request details for a specific order
+    :param id:
+    :return:
+    """
+    if db.get_user_by_value('users', 'id', id) is None:
+        return jsonify({"message": "user does not exist"}), 404
+    results = db.get_parcel_by_value('users', 'id', id)
+    user_dict = {
+        "user_id": results[0],
+        "fullname": results[1],
+        "username": results[2],
+        "telephone_number": results[3],
+        "is_admin": results[4],
+        "joined": results[5]
+
+    }
+    return jsonify(user_dict), 200
 
 
 @auth.route('/api/v2/auth/logout', methods=['POST'])
