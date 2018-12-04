@@ -98,7 +98,7 @@ def login_user():
                 'Failed', 'email or password is invalid', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
-            db_user[4], db_user[5])
+            db_user[4], db_user[6])
         if not check_password_hash(new_user.password, password):
             return response_message('Failed', 'email or password is invalid', 400)
         payload = {
@@ -112,11 +112,13 @@ def login_user():
         }
         token = jwt.encode(
             payload,
-            os.environ.get('trulysKey'),
+            'trulysKey',
             algorithm='HS256'
         )
         if token:
-            return jsonify({"message": "You have successfully logged in", "auth_token": token.decode('UTF-8')}), 200
+            return jsonify({"message": "You have successfully logged in", 
+            "auth_token": token.decode('UTF-8'),'user_id':new_user.user_id,
+            'is_admin':new_user.is_admin}), 200
     except Exception as er:
         return response_message(
             'Failed', 'email or password is invalid', 400)
@@ -162,7 +164,9 @@ def get_user_parcels(current_user, id):
                     "destination_address": parcel[2],
                     "sender_email": parcel[5],
                     "recipient_email": parcel[10],
-                    "recipient_phone_number": parcel[7]
+                    "recipient_phone_number": parcel[7],
+                     "placed":parcel[18],
+                 "status": parcel[6]
                 }
                 parcel_list.append(parcel_dict)
             return jsonify({"parcels": parcel_list}), 200
@@ -185,7 +189,7 @@ def change_user_type(current_user, user_id):
     return response_message('success', 'User is now admin', 200)
 
 
-# GET parcels/id
+# GET user/id
 @auth.route('/api/v2/users/<int:id>')
 @token_required
 @swag_from('../doc/get_user.yml')
@@ -195,16 +199,17 @@ def get_a_parcel(current_user, id):
     :param id:
     :return:
     """
-    if db.get_user_by_value('users', 'id', id) is None:
+    if db.get_user_by_value('users', 'user_id', id) is None:
         return jsonify({"message": "user does not exist"}), 404
-    results = db.get_parcel_by_value('users', 'id', id)
+    results = db.get_user_by_value('users', 'user_id', id)
     user_dict = {
         "user_id": results[0],
         "fullname": results[1],
         "username": results[2],
-        "telephone_number": results[3],
-        "is_admin": results[4],
-        "joined": results[5]
+        "telephone_number": results[5],
+        "is_admin": results[6],
+        "joined": results[7],
+        "email":results[3]
 
     }
     return jsonify(user_dict), 200

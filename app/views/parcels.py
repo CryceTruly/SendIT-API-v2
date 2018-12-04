@@ -39,7 +39,8 @@ def get_parcels(current_user):
                 "sender_email": parcel[5],
                 "recipient_email": parcel[10],
                 "recipient_phone_number_number": parcel[7],
-                "placed":parcel[18]
+                "placed":parcel[18],
+                 "status": parcel[6]
             }
             parcel_list.append(parcel_dict)
         return jsonify({"parcels": parcel_list}), 200

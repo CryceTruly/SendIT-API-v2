@@ -39,7 +39,7 @@ def token_required(f):
         token = get_token()
         try:
             database = Database()
-            data = jwt.decode(token, os.environ.get('trulysKey'),)
+            data = jwt.decode(token, 'trulysKey',)
             query = database.get_user_by_value(
                 'users', 'user_id', data['user_id']
             )
