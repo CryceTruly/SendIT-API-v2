@@ -186,7 +186,7 @@ def change_user_type(current_user, user_id):
 
 
 # GET parcels/id
-@ap.route('/api/v2/users/<int:id>')
+@auth.route('/api/v2/users/<int:id>')
 @token_required
 @swag_from('../doc/get_user.yml')
 def get_a_parcel(current_user, id):
