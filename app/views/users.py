@@ -105,7 +105,6 @@ def login_user():
 
             'exp': datetime.datetime.utcnow() +
                    datetime.timedelta(days=0, hours=23),
-            'email': new_user.email,
             'user_id': new_user.user_id,
             'email': new_user.email,
             'is_admin': new_user.is_admin
