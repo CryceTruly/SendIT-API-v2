@@ -58,6 +58,9 @@ def create_user():
         if db.get_user_by_value('users', 'email', email):
             return response_message(
                 'Failed', 'User with email ' + email + ' already exists', 409)
+        if db.get_user_by_value('users', 'username', username):
+            return response_message(
+                'Failed', username + ' is taken', 409)
         password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
         sendemail(
