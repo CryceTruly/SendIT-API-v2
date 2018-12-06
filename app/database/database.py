@@ -14,8 +14,8 @@ class Database(object):
             """
             conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
 
-            #self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
-            self.connection=psycopg2.connect(conn_string)
+            self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
+            #self.connection=psycopg2.connect(conn_string)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -34,8 +34,8 @@ class Database(object):
 
         try:
             password = generate_password_hash('adminuser')
-            sql = """INSERT INTO users(user_id,username,password,phone_number,email,is_admin)
-                    VALUES (100,'senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
+            sql = """INSERT INTO users(user_id,fullname,username,password,phone_number,email,is_admin)
+                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
             self.cursor.execute(sql)
             self.connection.commit()
         except Exception as ex:
@@ -102,7 +102,7 @@ class Database(object):
         :admin
         """
 
-        self.cursor.execute("SELECT * FROM parcels")
+        self.cursor.execute("SELECT * FROM parcels ORDER BY parcel_id DESC")
         all_parcels = self.cursor.fetchall()
         parcel_list = []
         for parcel in all_parcels:
@@ -147,7 +147,7 @@ class Database(object):
         Select from parcels where parcel.user_id = user.user_id
         :Admin
         """
-        query = "SELECT * FROM  parcels WHERE user_id = '{}';".format(user_id)
+        query = "SELECT * FROM  parcels WHERE user_id = '{}' ORDER BY parcel_id DESC;".format(user_id)
         self.cursor.execute(query)
         results = self.cursor.fetchall()
         if results:
@@ -294,4 +294,10 @@ class Database(object):
         self.connection.commit()
         results = self.cursor.fetchone()
         return results[0]
+
+    def delete_parcel(self, id):
+        sql = "DELETE FROM  parcels WHERE parcel_id = '{}'".format(id)
+        self.cursor.execute(sql)
+        self.connection.commit()
+        return id
 
