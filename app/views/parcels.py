@@ -58,7 +58,7 @@ def get_a_parcel(current_user, id):
     :return:
     """
     if not db.is_admin(current_user.user_id):
-        if str(current_user.user_id) != str(id):
+        if current_user.user_id != db.get_parce_owner_id(id):
             return response_message('unauthorized operation', 'You do not have enough permissions to access that', 401)
     if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
         return jsonify({"message": "parcel delivery request order not found"}), 404
@@ -76,9 +76,9 @@ def get_a_parcel(current_user, id):
         "destination latlng ": results[14],
         "pickuplatlng": results[13],
         "weight": results[9],
-        "distance(km)": results[16],
+        "distance": results[15],
         "status": results[6],
-        "price": results[15],
+        "price": results[16],
         "created": results[18],
         "last_modified": results[17],
         "parcel_description": results[4],
@@ -170,6 +170,22 @@ def cancel_parcel_request(current_user, id):
         {"message": "parcel request was cancelled successfully", "parcel_id": db.cancel_parcel(id)[0],
          "new_parcel_status": db.cancel_parcel(id)[6]}), 200
 
+@ap.route('/api/v2/parcels/<int:id>/delete', methods=['DELETE'])
+@token_required
+def delete_parcel_request(current_user, id):
+    '''
+    deletes a specific request given its identifier
+    '''
+    if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
+        return jsonify({"message": "parcel delivery request not found"}), 404
+
+    if db.is_order_delivered(id):
+        return jsonify({"message": "Not allowed parcel request has already been delivered"}), 403
+    if not db.is_parcel_owner(id, current_user.user_id):
+        return jsonify({"message": "Not authorized"}), 401
+    return jsonify(
+        {"message": "parcel request was deleted successfully", "parcel_id": db.delete_parcel(id)}), 200
+
 
 @ap.route('/api/v2/parcels/<int:id>/presentLocation', methods=['PUT'])
 @token_required
@@ -243,7 +259,7 @@ def change_destination(current_user, id):
 
     if not db.is_order_delivered(id):
         if db.is_parcel_owner(id, current_user.user_id):
-            our_user = db.get_user_by_value('users', 'user_id', 100)
+            our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
             sendemail(our_user[3], 'Destination Update',
                       'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + db.change_destination(
                           newdest, id))
