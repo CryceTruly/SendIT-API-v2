@@ -41,11 +41,46 @@ class Helper:
                 ls2.append(x)
             cords_2 = (tuple(ls2))
 
-            return geopy.distance.distance(cords_1, cords_2).km
+            return geopy.distance.vincenty(cords_1, cords_2).km
         except Exception as identifier:
             return 55
 
-    def get_latlong(self, add):
+    def get_formatted_address(self,address):
+        '''
+
+        :param add:
+        :return:
+        '''
+
+        try:
+            r = requests.get(
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
+            data = r.json()
+            results = data['results']
+            address = results[0]
+            return address['formatted_address']
+        except Exception as identifier:
+            return None
+
+    def get_pickup_latlong(self, add):
+        """
+        calculates the latlong given an address
+        :param add:
+        :return:
+        """
+        try:
+                r = requests.get(
+                    "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
+                data = r.json()
+                results = data['results']
+                address = results[0]
+                # Geometry
+                geometry = address['geometry']
+                return geometry['location']
+        except Exception as identifier:
+                return {'lat': 37.06250000000001, 'lng': -95.677068}
+
+    def get_dest_latlong(self, add):
         """
         calculates the latlong given an address
         :param add:
@@ -53,15 +88,15 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://www.mapquestapi.com/geocoding/v1/address?key=" + self.trulyKey + "&inFormat=kvp&outFormat=json&location= " + add + "&thumbMaps=false")
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
             data = r.json()
-            results = data['results'][0]
-            locations = results['locations']
-            latlng = locations[0].get('latLng')
-            return latlng
+            results = data['results']
+            address = results[0]
+            # Geometry
+            geometry = address['geometry']
+            return geometry['location']
         except Exception as identifier:
-            # print('Network Error')
-            return {"lat": -0.90629, "lng": 27.19168}
+            return {'lat': 0.3475964, 'lng': 32.5825197}
 
     def get_current_user_id(self):
 

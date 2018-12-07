@@ -191,10 +191,20 @@ class Database(object):
         self.cursor.execute(query)
         self.connection.commit()
 
-    def change_destination(self, new_value, parcel_id):
+    def change_destination(self, new_value, parcel_id,destlatlng):
         query = "UPDATE parcels SET destination_address = '{}' WHERE parcel_id ={};".format(new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
+        query2="UPDATE parcels SET destlatlng = '{}' WHERE parcel_id ={};".format(json.dumps(destlatlng), parcel_id)
+        self.cursor.execute(query2)
+        self.connection.commit()
+
+
+        # #STACK OVERFLOW WAY
+        # query="UPDATE parcels SET body = jsonb_set(body, '{name}', 'Mary', true) WHERE parcel_id = {};".format(parcel_id)
+        # self.cursor.execute(query)
+        # self.connection.commit()
+
         return new_value
 
     def delete_table_column(self, table_name, table_colum, id):
@@ -272,6 +282,13 @@ class Database(object):
 
     def get_destination_address(self, id):
         query = "SELECT destination_address FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+
+    def get_pick_up_latlng(self, id):
+        query = "SELECT pickplatlng FROM parcels WHERE parcel_id={}".format(id)
         self.cursor.execute(query)
         self.connection.commit()
         results = self.cursor.fetchone()

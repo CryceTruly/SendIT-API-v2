@@ -11,6 +11,7 @@ from app.util.helper import Helper
 
 ap = Blueprint('parcels', __name__)
 db = Database()
+helper=Helper()
 
 
 @ap.route("/")
@@ -21,7 +22,7 @@ def welcome(current_user):
 
 # GET parcels
 
-@ap.route('/api/v2/parcels')
+@ap.route('/api/v2/parcels',methods=['GET'])
 @token_required
 @swag_from('../doc/get_all_parcels.yml')
 def get_parcels(current_user):
@@ -73,8 +74,8 @@ def get_a_parcel(current_user, id):
         "recipient_phone_number": results[7],
         "current_location": results[10],
         "recipient fullname": results[12],
-        "destination latlng ": results[14],
-        "pickuplatlng": results[13],
+        "destination_latlng": results[14],
+        "pickuplat_lng": results[13],
         "weight": results[9],
         "distance": results[15],
         "status": results[6],
@@ -110,8 +111,16 @@ def add_parcel(current_user):
         if not isinstance(request_data['pickup_address'], str):
             return jsonify({"message": "pickup_address should be string values"}), 400
 
+        if (helper.get_formatted_address(request_data['pickup_address']))is None:
+            return jsonify({"message": "pickup_address not found"}), 400
+
+
+
+
         if not isinstance(request_data['destination_address'], str):
             return jsonify({"message": "destination_address should be string values"}), 400
+        if (helper.get_formatted_address(request_data['destination_address']))is None:
+            return jsonify({"message": "destination_address not found"}), 400
         if not isinstance(request_data['quantity'], int):
             return jsonify({"message": "quantity should be integer values"}), 400
 
@@ -119,20 +128,21 @@ def add_parcel(current_user):
             return jsonify({"message": "weight should be integer values"}), 400
 
         if not isinstance(request_data['recipient_name'], str):
-            return jsonify({"message": "destination_address should be string values"}), 400
+            return jsonify({"message": "recipient_name should be string values"}), 400
+
 
 
     except KeyError as keyerr:
         return response_message('Failed', str(keyerr) + 'is missing', 400)
-    dest_lat_lng = helper.get_latlong(request_data['destination_address'])
-    pickup_latlng = helper.get_latlong(request_data['pickup_address'])
+    dest_lat_lng = helper.get_dest_latlong(request_data['destination_address'])
+    pickup_latlng = helper.get_pickup_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)
     price = helper.get_charge(request_data['weight'], distance, request_data['quantity'])
 
     try:
 
-        db.insert_into_parcels(request_data['destination_address'],
-                               request_data['pickup_address'],
+        db.insert_into_parcels(helper.get_formatted_address(request_data['destination_address']),
+                               helper.get_formatted_address(request_data['pickup_address']),
                                request_data['parcel_description'],
                                current_user.user_id,
                                db.get_user_email(current_user.user_id),
@@ -249,25 +259,26 @@ def change_destination(current_user, id):
     rdata = request.get_json()
     if not "destination_address" in rdata:
         return jsonify({'message': 'Please add a new destination address'}), 400
-
     newdest = rdata['destination_address']
     if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
         return jsonify({"message": "parcel delivery request not found"}), 404
+    if (helper.get_formatted_address(rdata['destination_address'])) is None:
+        return jsonify({"message": "destination_address not found"}), 400
     # CHECK SAME DESTINATION ADDRESSES
     if str(db.get_destination_address(id)).lower() == str(newdest).lower():
-        return response_message('Forbidden', 'Not authorised to perform operation', 401)
-
+        return response_message('Forbidden', 'cannot change to the same destination', 403)
     if not db.is_order_delivered(id):
         if db.is_parcel_owner(id, current_user.user_id):
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+            new_lat_lng=helper.get_dest_latlong(newdest)
+            res=db.change_destination(newdest, id,new_lat_lng)
             sendemail(our_user[3], 'Destination Update',
-                      'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + db.change_destination(
-                          newdest, id))
+                      'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + res)
 
             return jsonify({'message': 'destination updated successfully',
-                            'new_destination': db.change_destination(newdest, id)}), 200
+                            'new_destination': res}), 200
         else:
-            return response_message('Forbidden', 'Not authorised to perform operation', 401)
+            return response_message('Forbidden', 'Not authorised to perform operation', 403)
 
     else:
         return jsonify({'message': 'order already delivered cant update'}), 403

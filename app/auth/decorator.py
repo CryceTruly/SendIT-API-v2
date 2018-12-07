@@ -19,11 +19,7 @@ def get_token():
             'status': 'failed',
             'message': 'Token is missing!'
         }), 401)
-    #if database.is_token_invalid(token):
-        return make_response(jsonify({
-            'status': 'token expired',
-            'message': 'Please login again!'
-        }), 401)
+
 
     return token
 
