@@ -22,7 +22,7 @@ class Helper:
         :param distance
         :return:
         """
-        return self.base_price + (weight + distance * quantity)
+        return self.base_price + (weight + distance)
 
     def get_distance(self, point1, point2):
         """

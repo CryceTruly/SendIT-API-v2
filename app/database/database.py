@@ -191,7 +191,7 @@ class Database(object):
         self.cursor.execute(query)
         self.connection.commit()
 
-    def change_destination(self, new_value, parcel_id,destlatlng):
+    def change_destination(self, new_value, parcel_id,destlatlng,new_distance,new_price):
         query = "UPDATE parcels SET destination_address = '{}' WHERE parcel_id ={};".format(new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
@@ -199,11 +199,13 @@ class Database(object):
         self.cursor.execute(query2)
         self.connection.commit()
 
+        query3 = "UPDATE parcels SET price = '{}' WHERE parcel_id ={};".format(new_price, parcel_id)
+        self.cursor.execute(query3)
+        self.connection.commit()
 
-        # #STACK OVERFLOW WAY
-        # query="UPDATE parcels SET body = jsonb_set(body, '{name}', 'Mary', true) WHERE parcel_id = {};".format(parcel_id)
-        # self.cursor.execute(query)
-        # self.connection.commit()
+        query4 = "UPDATE parcels SET distance = '{}' WHERE parcel_id ={};".format(new_distance, parcel_id)
+        self.cursor.execute(query4)
+        self.connection.commit()
 
         return new_value
 
@@ -289,6 +291,13 @@ class Database(object):
 
     def get_pick_up_latlng(self, id):
         query = "SELECT pickplatlng FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+
+    def get_parcel_weight(self, id):
+        query = "SELECT weight FROM parcels WHERE parcel_id={}".format(id)
         self.cursor.execute(query)
         self.connection.commit()
         results = self.cursor.fetchone()

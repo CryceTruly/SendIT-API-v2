@@ -11,7 +11,7 @@ from app.util.helper import Helper
 
 ap = Blueprint('parcels', __name__)
 db = Database()
-helper=Helper()
+
 
 
 @ap.route("/")
@@ -257,6 +257,7 @@ def change_order_status(current_user, id):
 @swag_from('../doc/changedestination.yml')
 def change_destination(current_user, id):
     rdata = request.get_json()
+    helper = Helper()
     if not "destination_address" in rdata:
         return jsonify({'message': 'Please add a new destination address'}), 400
     newdest = rdata['destination_address']
@@ -271,7 +272,10 @@ def change_destination(current_user, id):
         if db.is_parcel_owner(id, current_user.user_id):
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
             new_lat_lng=helper.get_dest_latlong(newdest)
-            res=db.change_destination(newdest, id,new_lat_lng)
+            new_distance=helper.get_distance(new_lat_lng,db.get_pick_up_latlng(id))
+            parcel_weight=db.get_parcel_weight(id)
+            new_price=helper.get_charge(parcel_weight,new_distance,quantity=None)
+            res=db.change_destination(helper.get_formatted_address(newdest), id,new_lat_lng,new_distance,new_price)
             sendemail(our_user[3], 'Destination Update',
                       'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + res)
 
