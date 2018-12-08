@@ -220,6 +220,7 @@ class Database(object):
         self.cursor.execute(query)
         self.connection.commit()
 
+
     def cancel_parcel(self, id):
         sql = "UPDATE parcels SET status='{}' WHERE parcel_id = '{}'".format('cancelled', id)
         self.cursor.execute(sql)
@@ -291,6 +292,12 @@ class Database(object):
 
     def get_pick_up_latlng(self, id):
         query = "SELECT pickplatlng FROM parcels WHERE parcel_id={}".format(id)
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
+    def get_destination_latlng(self, id):
+        query = "SELECT destlatlng  FROM parcels WHERE parcel_id={}".format(id)
         self.cursor.execute(query)
         self.connection.commit()
         results = self.cursor.fetchone()

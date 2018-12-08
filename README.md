@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SendIT-Api
 [![Build Status](https://travis-ci.org/CryceTruly/SendITApi-v2.svg?branch=dev)](https://travis-ci.org/CryceTruly/SendITApi-v2)
 [![Coverage Status](https://coveralls.io/repos/github/CryceTruly/SendITApi-v2/badge.svg?branch=dev)](https://coveralls.io/github/CryceTruly/SendITApi-v2?branch=dev)
@@ -155,3 +156,7 @@ MIT
 [Cryce Truly](https://github.com/crycetruly)
 
 
+=======
+# SendITApi-v2
+A rest api for the SendIT application v2
+>>>>>>> master

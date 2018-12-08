@@ -13,7 +13,6 @@ ap = Blueprint('parcels', __name__)
 db = Database()
 
 
-
 @ap.route("/")
 @token_required
 def welcome(current_user):
@@ -22,7 +21,7 @@ def welcome(current_user):
 
 # GET parcels
 
-@ap.route('/api/v2/parcels',methods=['GET'])
+@ap.route('/api/v2/parcels', methods=['GET'])
 @token_required
 @swag_from('../doc/get_all_parcels.yml')
 def get_parcels(current_user):
@@ -40,8 +39,8 @@ def get_parcels(current_user):
                 "sender_email": parcel[5],
                 "recipient_email": parcel[10],
                 "recipient_phone_number_number": parcel[7],
-                "placed":parcel[18],
-                 "status": parcel[6]
+                "placed": parcel[18],
+                "status": parcel[6]
             }
             parcel_list.append(parcel_dict)
         return jsonify({"parcels": parcel_list}), 200
@@ -111,15 +110,12 @@ def add_parcel(current_user):
         if not isinstance(request_data['pickup_address'], str):
             return jsonify({"message": "pickup_address should be string values"}), 400
 
-        if (helper.get_formatted_address(request_data['pickup_address']))is None:
+        if (helper.get_formatted_address(request_data['pickup_address'])) is None:
             return jsonify({"message": "pickup_address not found"}), 400
-
-
-
 
         if not isinstance(request_data['destination_address'], str):
             return jsonify({"message": "destination_address should be string values"}), 400
-        if (helper.get_formatted_address(request_data['destination_address']))is None:
+        if (helper.get_formatted_address(request_data['destination_address'])) is None:
             return jsonify({"message": "destination_address not found"}), 400
         if not isinstance(request_data['quantity'], int):
             return jsonify({"message": "quantity should be integer values"}), 400
@@ -164,7 +160,6 @@ def add_parcel(current_user):
 @ap.route('/api/v2/parcels/<int:id>/cancel', methods=['PUT'])
 @swag_from('../doc/cancel_parcell.yml')
 @token_required
-
 def cancel_parcel_request(current_user, id):
     '''
     cancels a specific request given its identifier
@@ -179,6 +174,7 @@ def cancel_parcel_request(current_user, id):
     return jsonify(
         {"message": "parcel request was cancelled successfully", "parcel_id": db.cancel_parcel(id)[0],
          "new_parcel_status": db.cancel_parcel(id)[6]}), 200
+
 
 @ap.route('/api/v2/parcels/<int:id>/delete', methods=['DELETE'])
 @token_required
@@ -201,6 +197,7 @@ def delete_parcel_request(current_user, id):
 @token_required
 @swag_from('../doc/change_present_locationn.yml')
 def change_present_location(current_user, id):
+    heper = Helper()
     if not db.is_admin(current_user.user_id):
         return response_message('Unauthorized', 'Not enough access previleges', 401)
     request_data = request.get_json()
@@ -210,7 +207,14 @@ def change_present_location(current_user, id):
         if not db.get_parcel_by_value('parcels', 'parcel_id', id):
             return jsonify({'message': 'order not found'}), 404
         if is_should_update(request_data):
-            db.change_present_location(request_data['current_location'], id)
+            db.change_present_location(heper.get_formatted_address(request_data['current_location']), id)
+
+            if heper.get_dest_latlong(
+                    heper.get_formatted_address(request_data['current_location'])) == db.get_destination_latlng(id):
+                db.update_parcel_status('delivered', id)
+            else:
+                db.update_parcel_status('in_transit', id)
+
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
             sendemail(our_user[3], 'Order Update',
                       'Hello there ' + our_user[1] + '\nYour parcels location is now ' + db.get_current_location(id))
@@ -271,11 +275,11 @@ def change_destination(current_user, id):
     if not db.is_order_delivered(id):
         if db.is_parcel_owner(id, current_user.user_id):
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
-            new_lat_lng=helper.get_dest_latlong(newdest)
-            new_distance=helper.get_distance(new_lat_lng,db.get_pick_up_latlng(id))
-            parcel_weight=db.get_parcel_weight(id)
-            new_price=helper.get_charge(parcel_weight,new_distance,quantity=None)
-            res=db.change_destination(helper.get_formatted_address(newdest), id,new_lat_lng,new_distance,new_price)
+            new_lat_lng = helper.get_dest_latlong(newdest)
+            new_distance = helper.get_distance(new_lat_lng, db.get_pick_up_latlng(id))
+            parcel_weight = db.get_parcel_weight(id)
+            new_price = helper.get_charge(parcel_weight, new_distance, quantity=None)
+            res = db.change_destination(helper.get_formatted_address(newdest), id, new_lat_lng, new_distance, new_price)
             sendemail(our_user[3], 'Destination Update',
                       'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + res)
 
@@ -315,7 +319,7 @@ def sendemail(email, subject, body):
     mail = Mail(app)
     try:
         message = Message(subject,
-                          sender="updates@sendit.com",
+                          sender="crycetruly@gmail.com",
                           recipients=[email])
         message.body = body
         mail.send(message)
