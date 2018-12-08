@@ -9,12 +9,21 @@ from app.database.database import Database
 
 class Helper:
     def __init__(self):
-        self.base_price = 3
+        self.base_price = 1.5
         self.trulyKey = os.environ.get('trulysKey')
+        self.categories = {"0-5": 1,
+                           "6-30": 3,
+                           "31-60": 6,
+                           "70-100": 9,
+                           "101-300": 12,
+                           "301-499": 15,
+                           "500-1000": 18,
+                           "1001-5000": 25
+                           }
         db = Database()
         self.parcels = db.get_all_parcels()
 
-    def get_charge(self, weight, distance,quantity):
+    def get_charge(self, weight, distance, quantity):
         """
         calculates the charge
         :param weight:
@@ -22,7 +31,18 @@ class Helper:
         :param distance
         :return:
         """
-        return self.base_price + (weight + distance)
+        return self.base_price * (self.get_my_charge(weight) + distance)
+
+    def get_values(self, start, finish):
+        return self.categories[str(start) + "-" + str(finish)]
+
+    def get_my_charge(self, weight):
+        if weight > 5000:
+            return self.get_values(1001, 5000)
+        for category in self.categories.keys():
+            start, finish = category.split('-')[0], category.split('-')[1]
+            if weight in range(int(start), int(finish)):
+                return self.get_values(start, finish)
 
     def get_distance(self, point1, point2):
         """
@@ -45,7 +65,7 @@ class Helper:
         except Exception as identifier:
             return 55
 
-    def get_formatted_address(self,address):
+    def get_formatted_address(self, address):
         '''
 
         :param add:
@@ -54,7 +74,7 @@ class Helper:
 
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key="+os.environ.get('api_key'))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -69,16 +89,16 @@ class Helper:
         :return:
         """
         try:
-                r = requests.get(
-                    "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
-                data = r.json()
-                results = data['results']
-                address = results[0]
-                # Geometry
-                geometry = address['geometry']
-                return geometry['location']
+            r = requests.get(
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
+            data = r.json()
+            results = data['results']
+            address = results[0]
+            # Geometry
+            geometry = address['geometry']
+            return geometry['location']
         except Exception as identifier:
-                return {'lat': 37.06250000000001, 'lng': -95.677068}
+            return {'lat': 37.06250000000001, 'lng': -95.677068}
 
     def get_dest_latlong(self, add):
         """
@@ -88,7 +108,7 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=AIzaSyDQQ3v45Vf1LVh2JZFwh4yHaM4ERoPf1M0")
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
             data = r.json()
             results = data['results']
             address = results[0]
