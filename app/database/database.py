@@ -12,13 +12,16 @@ class Database(object):
         """
         creates a db
         """
-        conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
+        try:
+            # conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
 
-        #self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
-        self.connection=psycopg2.connect(conn_string)
-        self.connection.autocommit = True
-        self.cursor = self.connection.cursor()
-        self.create_tables()
+            self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
+            # self.connection=psycopg2.connect(conn_string)
+            self.connection.autocommit = True
+            self.cursor = self.connection.cursor()
+            self.create_tables()
+        except Exception as i:
+            print(i)
 
     def create_tables(self):
 
@@ -34,12 +37,12 @@ class Database(object):
 
             password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin)
-                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
+                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True)""".format(
+                password)
             self.cursor.execute(sql)
             self.connection.commit()
         except Exception as e:
             return None
-
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,
@@ -68,7 +71,6 @@ class Database(object):
               last_used TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)
         self.connection.commit()
-        print("created tables")
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
@@ -192,11 +194,11 @@ class Database(object):
         self.cursor.execute(query)
         self.connection.commit()
 
-    def change_destination(self, new_value, parcel_id,destlatlng,new_distance,new_price):
+    def change_destination(self, new_value, parcel_id, destlatlng, new_distance, new_price):
         query = "UPDATE parcels SET destination_address = '{}' WHERE parcel_id ={};".format(new_value, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
-        query2="UPDATE parcels SET destlatlng = '{}' WHERE parcel_id ={};".format(json.dumps(destlatlng), parcel_id)
+        query2 = "UPDATE parcels SET destlatlng = '{}' WHERE parcel_id ={};".format(json.dumps(destlatlng), parcel_id)
         self.cursor.execute(query2)
         self.connection.commit()
 
@@ -220,7 +222,6 @@ class Database(object):
         query = "UPDATE  parcels SET current_location = '{}' WHERE parcel_id ={};".format(location, parcel_id)
         self.cursor.execute(query)
         self.connection.commit()
-
 
     def cancel_parcel(self, id):
         sql = "UPDATE parcels SET status='{}' WHERE parcel_id = '{}'".format('cancelled', id)
@@ -304,6 +305,7 @@ class Database(object):
         self.connection.commit()
         results = self.cursor.fetchone()
         return results[0]
+
     def get_destination_latlng(self, id):
         query = "SELECT destlatlng  FROM parcels WHERE parcel_id={}".format(id)
         self.cursor.execute(query)
@@ -319,17 +321,16 @@ class Database(object):
         return results[0]
 
     def save_token(self, token):
-        print('token save'+str(token))
         query = "INSERT INTO tokens(token) VALUES = '{}'".format(str(token))
         self.cursor.execute(query)
         self.connection.commit()
 
-    def invalidate_a_token(self,token):
-        query = "UPDATE tokens SET is_valid  ={} WHERE token = '{}'".format(False,token)
+    def invalidate_a_token(self, token):
+        query = "UPDATE tokens SET is_valid  ={} WHERE token = '{}'".format(False, token)
         self.cursor.execute(query)
         self.connection.commit()
 
-    def is_token_invalid(self,token):
+    def is_token_invalid(self, token):
         query = "SELECT is_valid FROM tokens WHERE token={}".format(token)
         self.cursor.execute(query)
         self.connection.commit()
@@ -343,11 +344,11 @@ class Database(object):
         return id
 
     def search_app(self, query):
-        q="""SELECT users.user_id,users.full_name,users.email FROM users WHERE email LIKE '%{}%' OR username LIKE '%{}%' 
+        q = """SELECT users.user_id,users.full_name,users.email FROM users WHERE email LIKE '%{}%' OR username LIKE '%{}%' 
         OR full_name LIKE '%{}%' OR phone_number LIKE '%{}%'
          UNION 
-         SELECT parcels.parcel_id,parcels.sender_email,parcels.status FROM parcels WHERE destination_address  LIKE '%{}%' OR sender_email LIKE '%{}%' OR  pickup_address  LIKE '%{}%' OR  recipient_email  LIKE '%{}%' OR parcel_description  LIKE '%{}%' """\
-            .format(query,query,query,query,query,query,query,query,query)
+         SELECT parcels.parcel_id,parcels.sender_email,parcels.status FROM parcels WHERE destination_address  LIKE '%{}%' OR sender_email LIKE '%{}%' OR  pickup_address  LIKE '%{}%' OR  recipient_email  LIKE '%{}%' OR parcel_description  LIKE '%{}%' """ \
+            .format(query, query, query, query, query, query, query, query, query)
         self.cursor.execute(q)
         self.connection.commit()
         results = self.cursor.fetchall()
