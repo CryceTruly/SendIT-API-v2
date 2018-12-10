@@ -153,7 +153,7 @@ def add_parcel(current_user):
                                price)
     except psycopg2.IntegrityError:
         return response_message('message', 'something went wrong', 403)
-    return response_message('success', 'Parcel request has been created successfully', 201)
+    return jsonify({"status":"success", "message":"Parcel request has been created successfully","parcel":db.get_last_insert_id()}),201
 
 
 # PUT /parcels/<parcelId>/cancel
@@ -188,7 +188,7 @@ def delete_parcel_request(current_user, id):
     if db.is_order_delivered(id):
         return jsonify({"message": "Not allowed parcel request has already been delivered"}), 403
     if not db.is_parcel_owner(id, current_user.user_id):
-        return jsonify({"message": "Not authorized"}), 401
+        return jsonify({"message": "You cannot do that,not enough previledges"}), 401
     return jsonify(
         {"message": "parcel request was deleted successfully", "parcel_id": db.delete_parcel(id)}), 200
 
@@ -205,16 +205,17 @@ def change_present_location(current_user, id):
         if not isinstance(request_data['current_location'], str):
             return response_message('error', 'current location should be string value', 400)
         if not db.get_parcel_by_value('parcels', 'parcel_id', id):
-            return jsonify({'message': 'order not found'}), 404
+            return response_message('error','order not found',404)
         if is_should_update(request_data):
-            db.change_present_location(heper.get_formatted_address(request_data['current_location']), id)
+            cl=heper.get_formatted_address(request_data['current_location'])
+            if cl is None:
+                return response_message('error', 'current location address does not exist', 400)
 
-            if heper.get_dest_latlong(
-                    heper.get_formatted_address(request_data['current_location'])) == db.get_destination_latlng(id):
+            db.change_present_location(cl, id)
+            if heper.get_dest_latlong(heper.get_formatted_address(request_data['current_location'])) == db.get_destination_latlng(id):
                 db.update_parcel_status('delivered', id)
             else:
                 db.update_parcel_status('in_transit', id)
-
             our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
             sendemail(our_user[3], 'Order Update',
                       'Hello there ' + our_user[1] + '\nYour parcels location is now ' + db.get_current_location(id))

@@ -8,38 +8,38 @@ class Database(object):
 
     def __init__(self):
         """initialize  connection """
-        try:
-            """
-            creates a db
-            """
-            conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
 
-            self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
-            #self.connection=psycopg2.connect(conn_string)
-            self.connection.autocommit = True
-            self.cursor = self.connection.cursor()
-            self.create_tables()
-        except(Exception, psycopg2.DatabaseError) as e:
-            print('There was an error' + str(e))
+        """
+        creates a db
+        """
+        conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
+
+        self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
+        #self.connection=psycopg2.connect(conn_string)
+        self.connection.autocommit = True
+        self.cursor = self.connection.cursor()
+        self.create_tables()
 
     def create_tables(self):
 
         """ create tables """
         create_table = """CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30),
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),
-            is_admin BOOLEAN DEFAULT FALSE ,joined DATE DEFAULT CURRENT_TIMESTAMP )"""
+            is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now()  )"""
         self.cursor.execute(create_table)
         self.connection.commit()
 
         try:
+
             password = generate_password_hash('adminuser')
-            sql = """INSERT INTO users(user_id,fullname,username,password,phone_number,email,is_admin)
+            sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin)
                     VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True)""".format(password)
             self.cursor.execute(sql)
             self.connection.commit()
-        except Exception as ex:
-            return str(ex)
+        except Exception as e:
+            return None
+
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,
@@ -59,15 +59,16 @@ class Database(object):
             destlatlng json ,
             distance DOUBLE PRECISION,
             price DOUBLE PRECISION,
-            created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,last_modified DATE DEFAULT CURRENT_TIMESTAMP)"""
+            created TIMESTAMPTZ DEFAULT Now() ,last_modified TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)
         self.connection.commit()
 
         create_table = """CREATE TABLE IF NOT EXISTS tokens
               (id SERIAL PRIMARY KEY,token TEXT, is_valid BOOLEAN DEFAULT TRUE,
-              last_used DATE DEFAULT CURRENT_TIMESTAMP )"""
+              last_used TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)
         self.connection.commit()
+        print("created tables")
 
     def insert_into_user(self, fullname, username, email, phone_number, password):
         """
@@ -110,7 +111,7 @@ class Database(object):
         return parcel_list
 
     def get_users(self):
-        self.cursor.execute("SELECT * FROM users")
+        self.cursor.execute("SELECT * FROM users ORDER BY joined DESC")
         users = self.cursor.fetchall()
         user_list = []
         for user in users:
@@ -296,6 +297,13 @@ class Database(object):
         self.connection.commit()
         results = self.cursor.fetchone()
         return results[0]
+
+    def get_last_insert_id(self):
+        query = "SELECT parcel_id FROM parcels ORDER BY parcel_id DESC"
+        self.cursor.execute(query)
+        self.connection.commit()
+        results = self.cursor.fetchone()
+        return results[0]
     def get_destination_latlng(self, id):
         query = "SELECT destlatlng  FROM parcels WHERE parcel_id={}".format(id)
         self.cursor.execute(query)
@@ -334,3 +342,15 @@ class Database(object):
         self.connection.commit()
         return id
 
+    def search_app(self, query):
+        q="""SELECT users.user_id,users.full_name,users.email FROM users WHERE email LIKE '%{}%' OR username LIKE '%{}%' 
+        OR full_name LIKE '%{}%' OR phone_number LIKE '%{}%'
+         UNION 
+         SELECT parcels.parcel_id,parcels.sender_email,parcels.status FROM parcels WHERE destination_address  LIKE '%{}%' OR sender_email LIKE '%{}%' OR  pickup_address  LIKE '%{}%' OR  recipient_email  LIKE '%{}%' OR parcel_description  LIKE '%{}%' """\
+            .format(query,query,query,query,query,query,query,query,query)
+        self.cursor.execute(q)
+        self.connection.commit()
+        results = self.cursor.fetchall()
+        if results:
+            return results
+        return "No matches found"

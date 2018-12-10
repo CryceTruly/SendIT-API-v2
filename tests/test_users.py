@@ -1,11 +1,10 @@
-from app.database.database import Database
+
 from app.model.models import User
 from flask import Flask
 import json
 from app.model.models import Parcel, User
 from tests.test_base import TestsStart
 
-db = Database()
 
 
 class TestAuth(TestsStart):
@@ -218,8 +217,6 @@ class TestAuth(TestsStart):
             self.assertEqual(result.status_code, 201)
             res = json.loads(result.data.decode())
             self.assertTrue(res['status'] == 'Success')
-
-            users = Database().get_users()
             user_dict = {
                 "user_id": 1,
                 "fullname": "Cryce TrulyTest",
