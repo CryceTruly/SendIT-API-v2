@@ -13,10 +13,10 @@ class Database(object):
         creates a db
         """
         try:
-            conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
+            #conn_string = "host='ec2-23-21-201-12.compute-1.amazonaws.com' dbname='db1ni1t598io7g' user='mlepqftxygqppq' password='99ca6b3c6f65fac35a4a5683245c1590661bbc2089ceddd08b52cae865839505'"
 
-            #self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
-            self.connection=psycopg2.connect(conn_string)
+            self.connection = psycopg2.connect("dbname=sendit user=postgres password=postgres port=5432 host=localhost")
+            #self.connection=psycopg2.connect(conn_string)
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -344,11 +344,14 @@ class Database(object):
         return id
 
     def search_app(self, query):
+        # q = """SELECT users.user_id,users.full_name,users.email FROM users WHERE email LIKE '%{}%' OR username LIKE '%{}%'
+        # OR full_name LIKE '%{}%' OR phone_number LIKE '%{}%'
+        #  UNION
+        #  SELECT parcels.parcel_id,parcels.sender_email,parcels.status FROM parcels WHERE destination_address  LIKE '%{}%' OR sender_email LIKE '%{}%' OR  pickup_address  LIKE '%{}%' OR  recipient_email  LIKE '%{}%' OR parcel_description  LIKE '%{}%' """ \
+        #     .format(query, query, query, query, query, query, query, query, query)
         q = """SELECT users.user_id,users.full_name,users.email FROM users WHERE email LIKE '%{}%' OR username LIKE '%{}%' 
-        OR full_name LIKE '%{}%' OR phone_number LIKE '%{}%'
-         UNION 
-         SELECT parcels.parcel_id,parcels.sender_email,parcels.status FROM parcels WHERE destination_address  LIKE '%{}%' OR sender_email LIKE '%{}%' OR  pickup_address  LIKE '%{}%' OR  recipient_email  LIKE '%{}%' OR parcel_description  LIKE '%{}%' """ \
-            .format(query, query, query, query, query, query, query, query, query)
+               OR full_name LIKE '%{}%' OR phone_number LIKE '%{}%'""".format(query, query, query, query)
+
         self.cursor.execute(q)
         self.connection.commit()
         results = self.cursor.fetchall()
