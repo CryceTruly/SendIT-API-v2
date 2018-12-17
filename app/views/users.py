@@ -11,9 +11,11 @@ from app.model.models import User
 from app.views.parcels import sendemail
 import os
 from app.auth.decorator import get_token
-
+from flask_cors import CORS
 auth = Blueprint('auth', __name__)
+
 db = Database()
+CORS(auth)
 
 
 @auth.route('/api/v2/auth/signup', methods=['POST'])

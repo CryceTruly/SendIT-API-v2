@@ -8,8 +8,6 @@ from flasgger import Swagger
 
 app=Flask(__name__)
 Swagger(app)
-CORS(app)
-
 app.register_blueprint(ap)
 app.register_blueprint(auth)
 app.register_blueprint(search)

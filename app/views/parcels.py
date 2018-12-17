@@ -8,8 +8,10 @@ from app.auth.decorator import response_message, token_required
 from validate_email import validate_email
 from flasgger import swag_from
 from app.util.helper import Helper
-
+from flask_cors import CORS
 ap = Blueprint('parcels', __name__)
+CORS(ap)
+
 db = Database()
 
 
