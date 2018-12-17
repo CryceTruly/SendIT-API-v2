@@ -1,0 +1,53 @@
+New Parcels
+---
+tags:
+  -  Create a new Parcel
+parameters:
+  - name: body
+    description: User submits an order for a parcel delivery
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+        - recipient_name
+        - parcel_description
+        - weight
+        - quantity
+        - pickup_address
+        - destination_address
+        - recipient_phone_number
+        - recipient_email
+      properties:
+        recipient_name:
+          type: string
+          example: Aron Mike
+        parcel_description:
+           type: string
+           example: Here are my stuff,contains laptops,please deliver
+        weight:
+           type: integer
+           example: 10
+        quantity:
+           type: integer
+           example: 19
+        pickup_address:
+           type: string
+           example: Mukono
+        destination_address:
+           type: string
+           example: Kampala
+        recipient_phone_number:
+          type: string
+          example: 0756747474
+        recipient_email:
+          type: string
+          example: fredgreg@gmail.com
+
+
+responses:
+  201:
+    description: a user successfully creates a parcel order
+
+  401:
+    description: A user has no previledges to post parcels

@@ -1,0 +1,33 @@
+cancel
+---
+tags:
+  -  Cancels a Parcel order
+parameters:
+  - name: body
+    description: Updates the application by  a cancelling out a placed order
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+        - "status"
+      properties:
+        status:
+          type: "string"
+          example: "delivered"
+responses:
+  200:
+    description: a user successfully cancels a parcel order
+
+  401:
+    description: a user has no enough previledges to cancel an order
+  
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT

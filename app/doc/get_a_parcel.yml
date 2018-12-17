@@ -1,0 +1,23 @@
+Single Parcel
+---
+tags:
+  -  Get Parcel Details 
+responses:
+  200:
+    description: Users can view details of a parcel  by its Id
+
+  404:
+    description: Parcel delivery request details not found
+
+  401:
+    description: The route is protected to only parcel owners and admin users
+
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT

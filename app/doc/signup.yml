@@ -1,0 +1,91 @@
+User Account SignUp
+---
+tags:
+  -  User SignUp
+parameters:
+  - name: body
+    description: The body should contain the user registration details
+    in: body
+    required: true
+    schema:
+      type: object
+      required:
+       - "fullname"
+       - "username"
+       - "email"
+       - "phone_number"
+       - "password"
+       
+       
+      properties:
+        fullname: 
+          type: "string"
+          example: "Greg Fred"
+
+        username:
+          type: "string"
+          example: "fred"
+        email:
+          type: "string"
+          format: "email"
+          example: "fred@gmail.com"
+        phone_number:
+           type: "string"
+           example: "0756778888"
+        password:
+          type: "string"
+          format: password
+          example: "Xvq6thCutest"
+        
+
+responses:
+  201:
+    description: User account gets successfully created.
+    schema:
+      type: object
+      properties:
+        fullname: 
+          type: "string"
+          example: "Greg Fred"
+
+        username:
+          type: "string"
+          example: "fred"
+        email:
+          type: "string"
+          format: "email"
+          example: "fred@gmail.com"
+        phone_number:
+           type: "string"
+           example: "0756778888"
+        password:
+          type: "string"
+          format: password
+          example: "Xvq6thCutest"
+  400:
+    description: Account creation fails when a user doesnot send valid type of data
+    schema:
+      type: object
+      properties:
+        fullname: 
+          type: "string"
+          example: "Greg"
+
+        username:
+          type: "string"
+          example: ""
+        email:
+          type: "string"
+          format: "email"
+          example: ""
+        phone_number:
+           type: "string"
+           example: ""
+        password:
+          type: "string"
+          format: password
+          example: ""
+            
+  409:
+    description: Fails to create an account because someone with the same email exists
+      

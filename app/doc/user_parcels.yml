@@ -1,0 +1,19 @@
+Get a user`s Parcels
+---
+tags:
+  -  Get all parcels that belong to a certain  user
+responses:
+  200:
+    description: Retrieves a list of parcels
+
+  401:
+    description: Not authorized a user may not have permission to access this route
+
+security:
+  - JWT:
+      description: Pass in jwt token. i.e Bearer <jwt>
+      type: apiKey
+      scheme: bearer
+      name: token
+      in: header
+      bearerFormat: JWT
