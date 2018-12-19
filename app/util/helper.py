@@ -74,7 +74,8 @@ class Helper:
 
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=" + os.environ.get(
+                    'api_key'))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -90,7 +91,8 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=" + os.environ.get(
+                    'api_key'))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -108,7 +110,8 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key=" + os.environ.get(
+                    'api_key'))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -116,7 +119,7 @@ class Helper:
             geometry = address['geometry']
             return geometry['location']
         except Exception as identifier:
-            return {'lat': 0.3475964, 'lng': 32.5825197}
+          return None
 
     def get_current_user_id(self):
 
@@ -124,7 +127,6 @@ class Helper:
             token = get_token()
             data = jwt.decode(token, os.environ.get('trulysKey'))
             return data['user_id']
-
 
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please log in again.', 401
