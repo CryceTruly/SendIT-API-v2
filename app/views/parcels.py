@@ -128,10 +128,8 @@ def add_parcel(current_user):
         if not isinstance(request_data['recipient_name'], str):
             return jsonify({"message": "recipient_name should be string values"}), 400
 
-
-
     except KeyError as keyerr:
-        return response_message('Failed', str(keyerr) + 'is missing', 400)
+        return response_message('Failed', f"{keyerr}" + 'is missing', 400)
     dest_lat_lng = helper.get_dest_latlong(request_data['destination_address'])
     pickup_latlng = helper.get_pickup_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)

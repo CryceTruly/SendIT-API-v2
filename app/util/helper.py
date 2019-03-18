@@ -10,7 +10,7 @@ from app.database.database import Database
 class Helper:
     def __init__(self):
         self.base_price = 1.5
-        self.trulyKey = os.environ.get('trulysKey')
+        self.trulyKey = os.environ.get('TRULYS_KEY','','')
         self.categories = {"0-5": 1,
                            "6-30": 3,
                            "31-60": 6,
@@ -74,7 +74,8 @@ class Helper:
 
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" +
+                address + "&key="+os.environ.get('API_KEY',''))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -90,7 +91,8 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" +
+                add + "&key="+os.environ.get('API_KEY',''))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -108,7 +110,7 @@ class Helper:
         """
         try:
             r = requests.get(
-                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('api_key'))
+                "https://maps.googleapis.com/maps/api/geocode/json?address=" + add + "&key="+os.environ.get('API_KEY',''))
             data = r.json()
             results = data['results']
             address = results[0]
@@ -122,9 +124,8 @@ class Helper:
 
         try:
             token = get_token()
-            data = jwt.decode(token, os.environ.get('trulysKey'))
+            data = jwt.decode(token, os.environ.get('TRULYS_KEY',''))
             return data['user_id']
-
 
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please log in again.', 401
