@@ -1,4 +1,3 @@
-from flask import json
 import datetime
 
 
@@ -50,7 +49,3 @@ class Parcel:
         """
         status = ['pickup_started','rejected', 'in_transit', 'cancelled', 'delivered']
         return status
-
-
-
-
