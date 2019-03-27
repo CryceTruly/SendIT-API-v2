@@ -7,8 +7,6 @@ from app.database.database import Database
 from app.model.models import User
 
 
-
-
 def get_token():
     token = None
     if 'Authorization' in request.headers:
@@ -32,9 +30,12 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token()
+        print(token)
         try:
             database = Database()
-            data = jwt.decode(token, os.environ.get('TRULYSKEY', ''),)
+            data = jwt.decode(get_token(),
+                              'TRULYS_SECRET')
+            print(data)
             query = database.get_user_by_value(
                 'users', 'user_id', data['user_id']
             )
@@ -43,11 +44,12 @@ def token_required(f):
             current_user = User(
                 query[0], query[1], query[2], query[3], query[4], query[5])
         except jwt.ExpiredSignatureError as e:
-            return response_message('Error', 'Signature expired,please login again', 401)
+            return response_message('error', 'token expired,please login again', 401)
         except jwt.InvalidSignatureError as serr:
-            return response_message('Error', 'Signature is invalid,please login again', 401)
+            print(serr)
+            return response_message('error', 'Signature is invalid,please login again', 401)
         except jwt.DecodeError:
-            return response_message('Error', 'please login', 401)
+            return response_message('error', 'please login', 401)
 
         return f(current_user, *args, **kwargs)
 

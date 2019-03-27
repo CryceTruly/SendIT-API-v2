@@ -25,7 +25,7 @@ class Database(object):
         """ create tables """
         create_table = """CREATE TABLE IF NOT EXISTS users
             (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,
-            email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),
+            email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
             is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)
         self.connection.commit()
@@ -33,8 +33,8 @@ class Database(object):
         try:
 
             password = generate_password_hash('adminuser')
-            sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin)
-                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True)""".format(
+            sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin,is_verified)
+                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True)""".format(
                 password)
             self.cursor.execute(sql)
             self.connection.commit()
@@ -369,3 +369,10 @@ class Database(object):
         if results:
             return results
         return "No matches found"
+
+    def verify_user(self, user):
+        print(user['email'])
+        query = "UPDATE users SET is_verified = {} WHERE email = '{}';".format(
+            True, str(user['email']))
+        self.cursor.execute(query)
+        self.connection.commit()

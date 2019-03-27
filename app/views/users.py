@@ -65,14 +65,18 @@ def create_user():
                 'Failed', username + ' is taken', 409)
         password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
+
+        url = f"{request.url_root}api/v2/auth/email_verify?token={jwt.encode({'email':email},'TRULYS_SECRET').decode('utf-8')}"
+
         sendemail(
             email, 'Welcome to SendIT',
-            'Hello there ' + fullname +
-                ',\n We want to thank you for joining our platform and we love you\n'
-                                        'For any inquiries,you can dm us on twitter or reply to this email\n Have fun \nThe SendIT Team'
+            'Hello there ' + fullname + 'Click this link to verify your email\n' +
+            '\n '+url
+
+
         )
 
-        return response_message('Success', 'User account successfully created, log in', 201)
+        return response_message('Success', 'Please visit your email to verify your account', 201)
     except KeyError as e:
         return jsonify({'Error': str(e) + ' is missing'}), 400
 
@@ -98,32 +102,39 @@ def login_user():
 
         password = request_data['password']
         db_user = db.get_user_by_value('users', 'email', email)
-        if not db_user:
+        if not db_user[6]:
             return response_message(
-                'Failed', 'email or password is invalid', 401)
+                'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[4], db_user[6])
-        if not check_password_hash(new_user.password, password):
+        passed = check_password_hash(new_user.password, password)
+
+        if passed is False:
+
             return response_message('Failed', 'email or password is invalid', 400)
+        else:
+            print(222)
         payload = {
 
             'exp': datetime.datetime.utcnow() +
-                   datetime.timedelta(days=0, hours=23),
+            datetime.timedelta(days=0, hours=23),
             'user_id': new_user.user_id,
             'email': new_user.email,
             'is_admin': new_user.is_admin
         }
         token = jwt.encode(
             payload,
-            'trulysKey',
+            'TRULYS_SECRET',
             algorithm='HS256'
         )
         if token:
-            return jsonify({"message": "You have successfully logged in", 
-            "auth_token": token.decode('UTF-8'),'user_id':new_user.user_id,
-            'is_admin':new_user.is_admin}), 200
+            return jsonify({"message": "You have successfully logged in",
+                            "auth_token": token.decode('UTF-8'), 'user_id': new_user.user_id,
+                            'is_admin': new_user.is_admin}), 200
     except Exception as er:
+        print(er)
+
         return response_message(
             'Failed', 'email or password is invalid', 400)
 
@@ -169,8 +180,8 @@ def get_user_parcels(current_user, id):
                     "sender_email": parcel[5],
                     "recipient_email": parcel[10],
                     "recipient_phone_number": parcel[7],
-                     "placed":parcel[18],
-                 "status": parcel[6]
+                    "placed": parcel[18],
+                    "status": parcel[6]
                 }
                 parcel_list.append(parcel_dict)
             return jsonify({"parcels": parcel_list}), 200
@@ -213,7 +224,7 @@ def get_a_parcel(current_user, id):
         "telephone_number": results[5],
         "is_admin": results[6],
         "joined": results[7],
-        "email":results[3]
+        "email": results[3]
 
     }
     return jsonify(user_dict), 200
@@ -224,3 +235,20 @@ def get_a_parcel(current_user, id):
 def logout(current_user):
     db.invalidate_a_token(get_token())
     return response_message('success', 'you have successfully logged out', 200)
+
+
+@auth.route('/api/v2/auth/email_verify', methods=['GET'])
+def verify_user():
+    "verifies a users email"
+    try:
+        user = jwt.decode(request.args.get('token'),
+                          'TRULYS_SECRET')
+        db.verify_user(user)
+        return jsonify({"message": "email verified successfully,you can now log in"}), 200
+
+    except jwt.InvalidSignatureError as identifier:
+        print(identifier)
+        return jsonify({"message": "verification is invalid or expired"}), 400
+
+    except jwt.exceptions.DecodeError as e:
+        return jsonify({"message": "sorry the verification link is invalid"}), 400
