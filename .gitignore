@@ -8,3 +8,4 @@ coverage
 app/__init__.pyc
 app/views/__init__.pyc
 app/views/parcels.pyc
+.env
