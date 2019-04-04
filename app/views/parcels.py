@@ -133,27 +133,30 @@ def add_parcel(current_user):
     dest_lat_lng = helper.get_dest_latlong(request_data['destination_address'])
     pickup_latlng = helper.get_pickup_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)
-    price = helper.get_charge(request_data['weight'], distance, request_data['quantity'])
+    price = helper.get_charge(
+        request_data['weight'], distance, request_data['quantity'])
 
     try:
 
-        db.insert_into_parcels(helper.get_formatted_address(request_data['destination_address']),
-                               helper.get_formatted_address(request_data['pickup_address']),
-                               request_data['parcel_description'],
-                               current_user.user_id,
-                               db.get_user_email(current_user.user_id),
-                               request_data['recipient_name'],
-                               request_data['recipient_email'],
-                               request_data['recipient_phone_number'],
-                               request_data['weight'],
-                               request_data['quantity'],
-                               pickup_latlng,
-                               dest_lat_lng,
-                               distance,
-                               price)
+        db.insert_into_parcels(helper.get_formatted_address(
+            request_data['destination_address']),
+            helper.get_formatted_address(
+            request_data['pickup_address']),
+            request_data['parcel_description'],
+            current_user.user_id,
+            db.get_user_email(current_user.user_id),
+            request_data['recipient_name'],
+            request_data['recipient_email'],
+            request_data['recipient_phone_number'],
+            request_data['weight'],
+            request_data['quantity'],
+            pickup_latlng,
+            dest_lat_lng,
+            distance,
+            price)
     except psycopg2.IntegrityError:
         return response_message('message', 'something went wrong', 403)
-    return jsonify({"status":"success", "message":"Parcel request has been created successfully","parcel":db.get_last_insert_id()}),201
+    return jsonify({"status": "success", "message": "Parcel request has been created successfully", "parcel": db.get_last_insert_id()}), 201
 
 
 # PUT /parcels/<parcelId>/cancel
@@ -205,9 +208,9 @@ def change_present_location(current_user, id):
         if not isinstance(request_data['current_location'], str):
             return response_message('error', 'current location should be string value', 400)
         if not db.get_parcel_by_value('parcels', 'parcel_id', id):
-            return response_message('error','order not found',404)
+            return response_message('error', 'order not found', 404)
         if is_should_update(request_data):
-            cl=heper.get_formatted_address(request_data['current_location'])
+            cl = heper.get_formatted_address(request_data['current_location'])
             if cl is None:
                 return response_message('error', 'current location address does not exist', 400)
 
@@ -216,7 +219,8 @@ def change_present_location(current_user, id):
                 db.update_parcel_status('delivered', id)
             else:
                 db.update_parcel_status('in_transit', id)
-            our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+            our_user = db.get_user_by_value(
+                'users', 'user_id', db.get_parce_owner_id(id))
             sendemail(our_user[3], 'Order Update',
                       'Hello there ' + our_user[1] + '\nYour parcels location is now ' + db.get_current_location(id))
             return jsonify({'message': 'current location updated successfully',
@@ -239,7 +243,8 @@ def change_order_status(current_user, id):
 
         if not isinstance(request_data['status'], str):
             return response_message('error', 'status should be string value', 400)
-        status = ['pickup_started', 'rejected', 'in_transit', 'cancelled', 'delivered']
+        status = ['pickup_started', 'rejected',
+                  'in_transit', 'cancelled', 'delivered']
 
         if not db.get_parcel_by_value('parcels', 'parcel_id', id):
             return jsonify({'message': 'order not found'}), 404
@@ -249,7 +254,8 @@ def change_order_status(current_user, id):
                     'message': "invalid status,parcels can be cancelled,delivered,in_transit,rejected,pickup_started"}), 400
 
         db.change_status(request_data['status'], id)
-        our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+        our_user = db.get_user_by_value(
+            'users', 'user_id', db.get_parce_owner_id(id))
         sendemail(our_user[3], 'Order Status Update',
                   'Hello there ' + our_user[1] + '\nYour parcels status ' + request_data['status'])
         return jsonify({'message': 'order status updated successfully', 'new_status': request_data['status']}), 200
@@ -275,12 +281,16 @@ def change_destination(current_user, id):
         return response_message('Forbidden', 'cannot change to the same destination', 403)
     if not db.is_order_delivered(id):
         if db.is_parcel_owner(id, current_user.user_id):
-            our_user = db.get_user_by_value('users', 'user_id', db.get_parce_owner_id(id))
+            our_user = db.get_user_by_value(
+                'users', 'user_id', db.get_parce_owner_id(id))
             new_lat_lng = helper.get_dest_latlong(newdest)
-            new_distance = helper.get_distance(new_lat_lng, db.get_pick_up_latlng(id))
+            new_distance = helper.get_distance(
+                new_lat_lng, db.get_pick_up_latlng(id))
             parcel_weight = db.get_parcel_weight(id)
-            new_price = helper.get_charge(parcel_weight, new_distance, quantity=None)
-            res = db.change_destination(helper.get_formatted_address(newdest), id, new_lat_lng, new_distance, new_price)
+            new_price = helper.get_charge(
+                parcel_weight, new_distance, quantity=None)
+            res = db.change_destination(helper.get_formatted_address(
+                newdest), id, new_lat_lng, new_distance, new_price)
             sendemail(our_user[3], 'Destination Update',
                       'Hello there \n New Destination Update for ' + current_user.username + '\nNew Destination is  ' + res)
 
