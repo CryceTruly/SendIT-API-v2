@@ -1,6 +1,6 @@
 import psycopg2
 import json
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 import os
 
 
@@ -23,8 +23,9 @@ class Database(object):
 
     def create_tables(self):
         """ create tables """
+        imgURL="https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png"
         create_table = """CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL TEXT DEFAULT imgURL,
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
             is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)

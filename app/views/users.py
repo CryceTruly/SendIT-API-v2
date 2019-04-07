@@ -9,7 +9,6 @@ from validate_email import validate_email
 from app.database.database import Database
 from app.model.models import User
 from app.views.parcels import sendemail
-import os
 from app.auth.decorator import get_token
 from flask_cors import CORS
 auth = Blueprint('auth', __name__)
@@ -107,14 +106,11 @@ def login_user():
                 'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
-            db_user[4], db_user[6])
+            db_user[4], db_user[7])
         passed = check_password_hash(new_user.password, password)
 
         if passed is False:
-
             return response_message('Failed', 'email or password is invalid', 400)
-        else:
-            print(222)
         payload = {
 
             'exp': datetime.datetime.utcnow() +
@@ -129,9 +125,18 @@ def login_user():
             algorithm='HS256'
         )
         if token:
-            return jsonify({"message": "You have successfully logged in",
-                            "auth_token": token.decode('UTF-8'), 'user_id': new_user.user_id,
-                            'is_admin': new_user.is_admin}), 200
+            results = db.get_user_by_value('users', 'user_id', new_user.user_id)
+            user_dict = {
+                "user_id": results[0],
+                "fullname": results[1],
+                "username": results[2],
+                "telephone_number": results[5],
+                "is_admin": results[7],
+                "joined": results[8],
+                "email": results[3]
+
+            }
+            return jsonify({"auth_token": token.decode('UTF-8'),"user":user_dict}), 200
     except Exception as er:
         print(er)
 
@@ -208,7 +213,7 @@ def change_user_type(current_user, user_id):
 @auth.route('/api/v2/users/<int:id>')
 @token_required
 @swag_from('../doc/get_user.yml')
-def get_a_parcel(current_user, id):
+def get_a_user(current_user, id):
     """
     return order request details for a specific order
     :param id:
