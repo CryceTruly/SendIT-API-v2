@@ -138,8 +138,6 @@ def login_user():
             }
             return jsonify({"auth_token": token.decode('UTF-8'),"user":user_dict}), 200
     except Exception as er:
-        print(er)
-
         return response_message(
             'Failed', 'email or password is invalid', 400)
 
