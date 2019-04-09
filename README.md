@@ -10,7 +10,7 @@ SendIT is a courier service app that helps users deliver parcels to different de
   - Python 3.7.1
   - Flask 1.0.2
   - PostgreSQL 11.0
- 
+
 
 #  Features!
 
@@ -21,7 +21,7 @@ SendIT is a courier service app that helps users deliver parcels to different de
   - Users can see the details of a delivery order.
   - Admin can change the status and present location of a parcel delivery order.
 
- 
+
 
 
 And  also:
@@ -77,8 +77,8 @@ py.test --cov
 | URL Endpoint | HTTP Methods | Summary |
 | -------- | ------------- | --------- |
 | `api/v2/parcels` | `POST`  | Creates a new Parcel delivery order|
-| `api/v2/parcels/<int:id>` | `GET` | Retrieves a specific parcel 
-| `api/v2/parcels/<int:id>/cancel` | `PUT` | Cancels a specific parcel 
+| `api/v2/parcels/<int:id>` | `GET` | Retrieves a specific parcel
+| `api/v2/parcels/<int:id>/cancel` | `PUT` | Cancels a specific parcel
 | `api/v2/users` | `GET` | Retrieve all users |
 | `api/v2/auth/signup` | `POST` |  Creates a new User |
 | `api/v2/auth/login` | `POST` |  Log in a user |
@@ -100,7 +100,7 @@ Example body
 "phone_number":"0756778877",
 "email":"email@email.com",
 "password":"password"
-	
+
 }
 ```
 
@@ -135,27 +135,14 @@ Example body
 ## Deployement
 [Heroku Deployement](https://trulysendit.herokuapp.com)
 
-
-
-
-
-
-
-
 ### Todos
 
  - Write MORE Tests
  - Format addresses
  - Build a mobile app
- 
+
 License
 ---
 MIT
-## Author 
+## Author
 [Cryce Truly](https://github.com/crycetruly)
-
-
-=======
-# SendITApi-v2
-A rest api for the SendIT application v2
->>>>>>> master

@@ -101,8 +101,7 @@ def login_user():
 
         password = request_data['password']
         db_user = db.get_user_by_value('users', 'email', email)
-        print(db_user)
-        if not db_user[8]:
+        if not db_user[7]:
             return response_message(
                 'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
@@ -131,10 +130,11 @@ def login_user():
                 "user_id": results[0],
                 "fullname": results[1],
                 "username": results[2],
-                "telephone_number": results[5],
-                "is_admin": results[7],
-                "joined": results[8],
-                "email": results[3]
+                "telephone_number": results[6],
+                "is_admin": results[8],
+                "joined": results[9],
+                "email": results[4],
+                "imageUrl":results[3]
 
             }
             return jsonify({"auth_token": token.decode('UTF-8'),"user":user_dict}), 200

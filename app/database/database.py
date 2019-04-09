@@ -14,7 +14,7 @@ class Database(object):
         creates a db
         """
         try:
-            self.connection = psycopg2.connect(os.environ.get('CONN_STR'))
+            self.connection = psycopg2.connect(os.environ.get("CONN_STR",""))
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -23,9 +23,9 @@ class Database(object):
 
     def create_tables(self):
         """ create tables """
-        imgURL="https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png"
-        create_table = """CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL TEXT DEFAULT imgURL,
+        imgurl="""https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png"""
+        create_table = f"""CREATE TABLE IF NOT EXISTS users
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL text DEFAULT '{imgurl}',
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
             is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())"""
         self.cursor.execute(create_table)
