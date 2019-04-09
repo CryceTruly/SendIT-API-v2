@@ -69,7 +69,7 @@ def create_user():
 
         sendemail(
             email, 'Welcome to SendIT',
-            'Hello there ' + fullname + 'Click this link to verify your email\n' +
+            'Hello there ' + fullname + '\nClick this link to verify your email\n' +
             '\n '+url
 
 
@@ -101,12 +101,13 @@ def login_user():
 
         password = request_data['password']
         db_user = db.get_user_by_value('users', 'email', email)
-        if not db_user[6]:
+        print(db_user)
+        if not db_user[8]:
             return response_message(
                 'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
-            db_user[0], db_user[1], db_user[2], db_user[3],
-            db_user[4], db_user[7])
+            db_user[0], db_user[2], db_user[3], db_user[4],
+            db_user[5], db_user[6])
         passed = check_password_hash(new_user.password, password)
 
         if passed is False:

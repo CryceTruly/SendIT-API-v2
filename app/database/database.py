@@ -372,7 +372,6 @@ class Database(object):
         return "No matches found"
 
     def verify_user(self, user):
-        print(user['email'])
         query = "UPDATE users SET is_verified = {} WHERE email = '{}';".format(
             True, str(user['email']))
         self.cursor.execute(query)
