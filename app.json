@@ -1,0 +1,18 @@
+{
+  "addons": [
+    "heroku-postgresql"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+  },
+  "formation": {
+  },
+  "name": "SendITApi-v2",
+  "scripts": {
+  },
+  "stack": "heroku-18"
+}
