@@ -23,11 +23,11 @@ class Database(object):
 
     def create_tables(self):
         """ create tables """
-        imgurl="""https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png"""
-        create_table = f"""CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL text DEFAULT '{imgurl}',
+        imgURL='https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png'
+        create_table = """CREATE TABLE IF NOT EXISTS users
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL CHAR DEFAULT '{}',
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
-            is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())"""
+            is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())""".format(imgURL)
         self.cursor.execute(create_table)
         self.connection.commit()
 

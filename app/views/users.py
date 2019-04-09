@@ -31,8 +31,9 @@ def create_user():
     try:
         if not request_data:
             return jsonify({"message": "Empty request"}), 400
-        username = request_data['username']
-        str(username).replace(" ", "")
+        username = str(request_data['username'])
+        if not username.isalnum():
+            return response_message('Missing', 'Usernames must contain only letters and numbers', 400)
         email = request_data['email']
         fullname = request_data['fullname']
         if not fullname:
@@ -105,8 +106,8 @@ def login_user():
             return response_message(
                 'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
-            db_user[0], db_user[2], db_user[3], db_user[4],
-            db_user[5], db_user[6])
+            db_user[0], db_user[1], db_user[2], db_user[3],
+            db_user[5], db_user[7])
         passed = check_password_hash(new_user.password, password)
 
         if passed is False:
@@ -226,8 +227,8 @@ def get_a_user(current_user, id):
         "fullname": results[1],
         "username": results[2],
         "telephone_number": results[5],
-        "is_admin": results[6],
-        "joined": results[7],
+        "is_admin": results[7],
+        "joined": results[8],
         "email": results[3]
 
     }
