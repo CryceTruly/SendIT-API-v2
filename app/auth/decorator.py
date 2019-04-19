@@ -2,7 +2,6 @@ import os
 from functools import wraps
 from flask import request, jsonify, make_response
 import jwt
-
 from app.database.database import Database
 from app.model.models import User
 
@@ -30,7 +29,6 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token()
-        print(token)
         try:
             database = Database()
             data = jwt.decode(get_token(),
@@ -46,8 +44,7 @@ def token_required(f):
         except jwt.ExpiredSignatureError as e:
             return response_message('error', 'token expired,please login again', 401)
         except jwt.InvalidSignatureError as serr:
-            print(serr)
-            return response_message('error', 'Signature is invalid,please login again', 401)
+            return response_message('error', 'Signature is invalid,please log in again', 401)
         except jwt.DecodeError:
             return response_message('error', 'please login', 401)
 
@@ -65,7 +62,6 @@ def response(id, username, message, token, status_code):
         "username": username,
         "message": message,
         "auth_token": token
-
     }), status_code
 
 

@@ -33,20 +33,49 @@ def get_parcels(current_user):
     if all:
         parcel_list = []
         for parcel in all:
+            results = db.get_user_by_value('users', 'user_id', parcel[1])
+            user_dict = {
+                    "user_id": results[0],
+                    "fullname": results[1],
+                    "username": results[2],
+                    "telephone_number": results[5],
+                    "is_admin": results[7],
+                    "joined": results[8],
+                    "email": results[3]
+
+                }
+
             parcel_dict = {
                 "parcel_id": parcel[0],
-                "user_id": parcel[1],
-                "pickup_address": parcel[3],
-                "destination_address": parcel[2],
-                "sender_email": parcel[5],
-                "recipient_email": parcel[10],
-                "recipient_phone_number_number": parcel[7],
-                "placed": parcel[18],
-                "status": parcel[6]
+                "sender":user_dict,
+                "recipient": {
+                                "email": parcel[11],
+                                "recipient fullname": parcel[12],
+                                "phone_number": parcel[7]
+                        },
+                "addresses":{
+                    "pickup": parcel[3],
+                    "destination": parcel[2],
+                "current": parcel[10],
+                },
+                "latLngCodinates":{
+                "pickup": parcel[13],
+                "destination": parcel[14],
+                },
+                "stats":{
+"weight": parcel[9],
+                "status": parcel[6],
+                "price": parcel[16],
+                "tripDistance": parcel[15],
+                "quantity": parcel[8]
+                },
+                "created": parcel[18],
+                "last_modified": parcel[17],
+                "parcel_description": parcel[4]
             }
             parcel_list.append(parcel_dict)
         return jsonify({"parcels": parcel_list}), 200
-    return jsonify({'message': 'No parcel delivery orders posted yet', 'count': len(all)}), 404
+    return jsonify({'message': 'No parcel delivery orders posted yet'}), 404
 
 
 # GET parcels/id
@@ -65,28 +94,47 @@ def get_a_parcel(current_user, id):
     if db.get_parcel_by_value('parcels', 'parcel_id', id) is None:
         return jsonify({"message": "parcel delivery request order not found"}), 404
     results = db.get_parcel_by_value('parcels', 'parcel_id', id)
-    parcel_dict = {
-        "parcel_id": results[0],
-        "user_id": results[1],
-        "pickup_address": results[3],
-        "destination_address": results[2],
-        "sender_email": results[5],
-        "recipient_email": results[11],
-        "recipient_phone_number": results[7],
-        "current_location": results[10],
-        "recipient fullname": results[12],
-        "destination_latlng": results[14],
-        "pickuplat_lng": results[13],
-        "weight": results[9],
-        "distance": results[15],
-        "status": results[6],
-        "price": results[16],
-        "created": results[18],
-        "last_modified": results[17],
-        "parcel_description": results[4],
-        "quantity": results[8]
+    user_results = db.get_user_by_value('users', 'user_id', results[1])
+    user_dict = {
+                "user_id": user_results[0],
+                "fullname": user_results[1],
+                "username": user_results[2],
+                "telephone_number": user_results[6],
+                "is_admin": user_results[8],
+                "joined": user_results[9],
+                "email": user_results[4],
+                "imageUrl":user_results[3]
 
-    }
+            }
+
+    parcel_dict = {
+            "parcel_id": results[0],
+            "sender":user_dict,
+            "recipient": {
+                            "email": results[11],
+                            "fullname": results[12],
+                            "phone_number": results[7]
+                    },
+            "addresses":{
+                "pickup": results[3],
+                "destination": results[2],
+            "current": results[10],
+            },
+            "latLngCodinates":{
+            "pickup": results[13],
+            "destination": results[14],
+            },
+            "stats":{
+            "weight": results[9],
+            "status": results[6],
+            "price": results[16],
+            "tripDistance": results[15],
+            "quantity": results[8]
+            },
+            "created": results[18],
+            "last_modified": results[17],
+            "parcel_description": results[4]
+        }
     return jsonify(parcel_dict), 200
 
 
@@ -133,8 +181,7 @@ def add_parcel(current_user):
     dest_lat_lng = helper.get_dest_latlong(request_data['destination_address'])
     pickup_latlng = helper.get_pickup_latlong(request_data['pickup_address'])
     distance = helper.get_distance(pickup_latlng, dest_lat_lng)
-    price = helper.get_charge(
-        request_data['weight'], distance, request_data['quantity'])
+    price = helper.get_charge(request_data['weight'], distance, request_data['quantity'])
 
     try:
 
@@ -322,8 +369,8 @@ def sendemail(email, subject, body):
         MAIL_SERVER='smtp.gmail.com',
         MAIL_PORT=465,
         MAIL_USE_SSL=True,
-        MAIL_USERNAME="crycetruly@gmail.com",
-        MAIL_PASSWORD="Xvq6thCu"
+        MAIL_USERNAME=os.environ.get("SENDER_EMAIL",""),
+        MAIL_PASSWORD=os.environ.get("SENDER_PASSWORD","")
 
     )
     mail = Mail(app)
