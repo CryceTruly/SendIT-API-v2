@@ -14,7 +14,8 @@ class Database(object):
         creates a db
         """
         try:
-            self.connection = psycopg2.connect(os.environ.get("CONN_STR",""))
+            # use our connection values to establish a connection
+            self.connection = psycopg2.connect(os.environ.get("DATABASE_URL",""))
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -23,11 +24,11 @@ class Database(object):
 
     def create_tables(self):
         """ create tables """
-        imgurl="""https://d3n32ilufxuvd1.cloudfront.net/56fd5ecfedf7a42502965830/716244/upload-57c882a0-fdc2-11e6-8942-e1606bea3fc0.png"""
-        create_table = f"""CREATE TABLE IF NOT EXISTS users
-            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,photoURL text DEFAULT '{imgurl}',
+        img='https://bit.ly/2GNPIyC'
+        create_table = """CREATE TABLE IF NOT EXISTS users
+            (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,imageUrl VARCHAR(500) DEFAULT '{}',
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
-            is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())"""
+            is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())""".format(img)
         self.cursor.execute(create_table)
         self.connection.commit()
 
@@ -39,8 +40,8 @@ class Database(object):
                 password)
             self.cursor.execute(sql)
             self.connection.commit()
-        except Exception as e:
-            return None
+        except Exception as identifier:
+            print(identifier)
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,

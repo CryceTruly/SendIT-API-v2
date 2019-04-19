@@ -3,7 +3,7 @@ import re
 import datetime
 from app.auth.decorator import response_message, token_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify,redirect
 from flasgger import swag_from
 from validate_email import validate_email
 from app.database.database import Database
@@ -11,6 +11,7 @@ from app.model.models import User
 from app.views.parcels import sendemail
 from app.auth.decorator import get_token
 from flask_cors import CORS
+import os
 auth = Blueprint('auth', __name__)
 
 db = Database()
@@ -31,8 +32,9 @@ def create_user():
     try:
         if not request_data:
             return jsonify({"message": "Empty request"}), 400
-        username = request_data['username']
-        str(username).replace(" ", "")
+        username = str(request_data['username'])
+        if not username.isalnum():
+            return response_message('Missing', 'Usernames must contain only letters and numbers', 400)
         email = request_data['email']
         fullname = request_data['fullname']
         if not fullname:
@@ -71,8 +73,6 @@ def create_user():
             email, 'Welcome to SendIT',
             'Hello there ' + fullname + '\nClick this link to verify your email\n' +
             '\n '+url
-
-
         )
 
         return response_message('Success', 'Please visit your email to verify your account', 201)
@@ -105,8 +105,8 @@ def login_user():
             return response_message(
                 'Failed', 'email is not verified,please visit your mailbox', 401)
         new_user = User(
-            db_user[0], db_user[2], db_user[3], db_user[4],
-            db_user[5], db_user[6])
+            db_user[0], db_user[1], db_user[2], db_user[3],
+            db_user[5], db_user[7])
         passed = check_password_hash(new_user.password, password)
 
         if passed is False:
@@ -152,13 +152,14 @@ def get_users(current_user):
     user_list = []
     for user in users:
         user_dict = {
-            "user_id": user[0],
-            "fullname": user[1],
-            "username": user[2],
-            "email": user[3],
-            "phone_number": user[5],
-            "is_admin": user[6],
-            "joined": user[7]
+                "user_id": results[0],
+                "fullname": results[1],
+                "username": results[2],
+                "telephone_number": results[6],
+                "is_admin": results[8],
+                "joined": results[9],
+                "email": results[4],
+                "imageUrl":results[3]
         }
         user_list.append(user_dict)
     return jsonify({"users": user_list}), 200
@@ -175,19 +176,35 @@ def get_user_parcels(current_user, id):
         try:
 
             parcel_list = []
-            for parcel in db.get_user_parcels(id):
-                parcel_dict = {
-                    "parcel_id": parcel[0],
-                    "user_id": parcel[1],
-                    "pickup_address": parcel[3],
-                    "destination_address": parcel[2],
-                    "sender_email": parcel[5],
-                    "recipient_email": parcel[10],
-                    "recipient_phone_number": parcel[7],
-                    "placed": parcel[18],
-                    "status": parcel[6]
-                }
-                parcel_list.append(parcel_dict)
+            for results in db.get_user_parcels(id):
+                    parcel_dict = {
+                    "parcel_id": results[0],
+                    "recipient": {
+                            "email": results[11],
+                            "fullname": results[12],
+                            "phone_number": results[7]
+                    },
+                    "addresses":{
+                        "pickup": results[3],
+                        "destination": results[2],
+                    "current": results[10],
+                    },
+                    "latLngCodinates":{
+                    "pickup": results[13],
+                    "destination": results[14],
+                    },
+                    "stats":{
+                    "weight": results[9],
+                    "status": results[6],
+                    "price": results[16],
+                    "tripDistance": results[15],
+                    "quantity": results[8]
+                    },
+                    "created": results[18],
+                    "last_modified": results[17],
+                    "parcel_description": results[4]
+                     }
+                    parcel_list.append(parcel_dict)
             return jsonify({"parcels": parcel_list}), 200
         except IndexError as e:
             return jsonify({"message": 'User does not exist'}), 404
@@ -225,10 +242,11 @@ def get_a_user(current_user, id):
         "user_id": results[0],
         "fullname": results[1],
         "username": results[2],
-        "telephone_number": results[5],
-        "is_admin": results[6],
-        "joined": results[7],
-        "email": results[3]
+        "telephone_number": results[6],
+        "is_admin": results[8],
+        "joined": results[9],
+        "email": results[4],
+                "imageUrl":results[3]
 
     }
     return jsonify(user_dict), 200
@@ -248,10 +266,9 @@ def verify_user():
         user = jwt.decode(request.args.get('token'),
                           'TRULYS_SECRET')
         db.verify_user(user)
-        return jsonify({"message": "email verified successfully,you can now log in"}), 200
+        return redirect(os.environ.get('FRONT_END_URL','https://senditfrontend.herokuapp.com/login'), code=302)
 
     except jwt.InvalidSignatureError as identifier:
-        print(identifier)
         return jsonify({"message": "verification is invalid or expired"}), 400
 
     except jwt.exceptions.DecodeError as e:
