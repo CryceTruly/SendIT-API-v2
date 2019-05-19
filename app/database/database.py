@@ -15,7 +15,8 @@ class Database(object):
         """
         try:
             # use our connection values to establish a connection
-            self.connection = psycopg2.connect(os.environ.get("DATABASE_URL",""))
+            self.connection = psycopg2.connect(
+                os.environ.get("DATABASE_URL", ""))
             self.connection.autocommit = True
             self.cursor = self.connection.cursor()
             self.create_tables()
@@ -24,7 +25,7 @@ class Database(object):
 
     def create_tables(self):
         """ create tables """
-        img='https://bit.ly/2GNPIyC'
+        img = 'https://bit.ly/2GNPIyC'
         create_table = """CREATE TABLE IF NOT EXISTS users
             (user_id SERIAL PRIMARY KEY, full_name VARCHAR(255),username VARCHAR(30) UNIQUE,imageUrl VARCHAR(500) DEFAULT '{}',
             email VARCHAR(255),password VARCHAR(150), phone_number VARCHAR(100),is_verified BOOLEAN DEFAULT False,
@@ -33,7 +34,6 @@ class Database(object):
         self.connection.commit()
 
         try:
-
             password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin,is_verified)
                     VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True)""".format(
