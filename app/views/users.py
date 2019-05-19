@@ -3,7 +3,7 @@ import re
 import datetime
 from app.auth.decorator import response_message, token_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Blueprint, request, jsonify,redirect
+from flask import Blueprint, request, jsonify, redirect
 from flasgger import swag_from
 from validate_email import validate_email
 from app.database.database import Database
@@ -34,7 +34,8 @@ def create_user():
             return jsonify({"message": "Empty request"}), 400
         username = str(request_data['username'])
         if not username.isalnum():
-            return response_message('Missing', 'Usernames must contain only letters and numbers', 400)
+            return response_message('Missing',
+                                    'Usernames must contain only letters and numbers', 400)
         email = request_data['email']
         fullname = request_data['fullname']
         if not fullname:
@@ -42,14 +43,19 @@ def create_user():
 
         phone_number = str(request_data['phone_number'])
         if len(phone_number) < 10:
-            return response_message('Invalid', 'phone number should be atleast 10 characters long', 400)
+            return response_message('Invalid',
+                                    'phone number should be atleast 10 characters long', 400)
 
         if not re.match("[0-9]", phone_number):
-            return response_message('Invalid', 'phone number should not contain letters', 400)
+            return response_message('Invalid',
+                                    'phone number should not contain letters',
+                                    400)
         if not isinstance(fullname, str) or not isinstance(username, str):
-            return response_message('Invalid', 'fullname and username should be of type string', 400)
+            return response_message('Invalid',
+                                    'fullname and username should be of type string', 400)
         if len(str(fullname)) < 3 or len(username) < 3:
-            return response_message('Invalid', 'FullName and username should be atleast 3 characters long', 400)
+            return response_message('Invalid',
+                                    'FullName and username should be atleast 3 characters long', 400)
         if not username:
             return response_message('Missing', 'Username required', 400)
         if not validate_email(email):
@@ -67,15 +73,17 @@ def create_user():
         password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
 
-        url = f"{request.url_root}api/v2/auth/email_verify?token={jwt.encode({'email':email},'TRULYS_SECRET').decode('utf-8')}"
+        url = f"{request.url_root}api/v2/auth/email_verify?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
 
         sendemail(
             email, 'Welcome to SendIT',
-            'Hello there ' + fullname + '\nClick this link to verify your email\n' +
+            'Hello there ' + fullname +
+            '\nClick this link to verify your email\n' +
             '\n '+url
         )
 
-        return response_message('Success', 'Please visit your email to verify your account', 201)
+        return response_message('Success',
+                                'Please visit your email to verify your account', 201)
     except KeyError as e:
         return jsonify({'Error': str(e) + ' is missing'}), 400
 
@@ -103,14 +111,16 @@ def login_user():
         db_user = db.get_user_by_value('users', 'email', email)
         if not db_user[7]:
             return response_message(
-                'Failed', 'email is not verified,please visit your mailbox', 401)
+                'Failed', 'email is not verified,please visit your mailbox',
+                401)
         new_user = User(
             db_user[0], db_user[1], db_user[2], db_user[3],
             db_user[5], db_user[7])
         passed = check_password_hash(new_user.password, password)
 
-        if passed is False:
-            return response_message('Failed', 'email or password is invalid', 400)
+        if not passed:
+            return response_message('Failed', 'email or password is invalid',
+                                    400)
         payload = {
 
             'exp': datetime.datetime.utcnow() +
@@ -121,11 +131,12 @@ def login_user():
         }
         token = jwt.encode(
             payload,
-            'TRULYS_SECRET',
+            os.environ.get('TRULYS_SECRET', 'TRULYS_SECRET'),
             algorithm='HS256'
         )
         if token:
-            results = db.get_user_by_value('users', 'user_id', new_user.user_id)
+            results = db.get_user_by_value(
+                'users', 'user_id', new_user.user_id)
             user_dict = {
                 "user_id": results[0],
                 "fullname": results[1],
@@ -134,10 +145,11 @@ def login_user():
                 "is_admin": results[8],
                 "joined": results[9],
                 "email": results[4],
-                "imageUrl":results[3]
+                "imageUrl": results[3]
 
             }
-            return jsonify({"auth_token": token.decode('UTF-8'),"user":user_dict}), 200
+            return jsonify({"auth_token": token.decode('UTF-8'),
+                            "user": user_dict}), 200
     except Exception as er:
         return response_message(
             'Failed', 'email or password is invalid', 400)
@@ -147,19 +159,20 @@ def login_user():
 @token_required
 def get_users(current_user):
     if not db.is_admin(current_user.user_id):
-        return response_message('unauthorized operation', 'Only admin users can view all users', 401)
+        return response_message('unauthorized operation',
+                                'Only admin users can view all users', 401)
     users = Database().get_users()
     user_list = []
     for user in users:
         user_dict = {
-                "user_id": results[0],
-                "fullname": results[1],
-                "username": results[2],
-                "telephone_number": results[6],
-                "is_admin": results[8],
-                "joined": results[9],
-                "email": results[4],
-                "imageUrl":results[3]
+            "user_id": user[0],
+            "fullname": user[1],
+            "username": user[2],
+            "telephone_number": user[6],
+            "is_admin": user[8],
+            "joined": user[9],
+            "email": user[4],
+            "imageUrl": user[3]
         }
         user_list.append(user_dict)
     return jsonify({"users": user_list}), 200
@@ -171,40 +184,40 @@ def get_users(current_user):
 def get_user_parcels(current_user, id):
     if not db.is_admin(current_user.user_id):
         if current_user.user_id != id:
-            return response_message('unauthorized operation', 'You do not have permissions to access that', 401)
+            return response_message('unauthorized operation',
+                                    'You do not have permissions to access that', 401)
     if not db.get_user_by_value('users', 'user_id', id) is None:
         try:
-
             parcel_list = []
             for results in db.get_user_parcels(id):
-                    parcel_dict = {
+                parcel_dict = {
                     "parcel_id": results[0],
                     "recipient": {
-                            "email": results[11],
-                            "fullname": results[12],
-                            "phone_number": results[7]
+                        "email": results[11],
+                        "fullname": results[12],
+                        "phone_number": results[7]
                     },
-                    "addresses":{
+                    "addresses": {
                         "pickup": results[3],
                         "destination": results[2],
-                    "current": results[10],
+                        "current": results[10],
                     },
-                    "latLngCodinates":{
-                    "pickup": results[13],
-                    "destination": results[14],
+                    "latLngCodinates": {
+                        "pickup": results[13],
+                        "destination": results[14],
                     },
-                    "stats":{
-                    "weight": results[9],
-                    "status": results[6],
-                    "price": results[16],
-                    "tripDistance": results[15],
-                    "quantity": results[8]
+                    "stats": {
+                        "weight": results[9],
+                        "status": results[6],
+                        "price": results[16],
+                        "tripDistance": results[15],
+                        "quantity": results[8]
                     },
                     "created": results[18],
                     "last_modified": results[17],
                     "parcel_description": results[4]
-                     }
-                    parcel_list.append(parcel_dict)
+                }
+                parcel_list.append(parcel_dict)
             return jsonify({"parcels": parcel_list}), 200
         except IndexError as e:
             return jsonify({"message": 'User does not exist'}), 404
@@ -246,7 +259,7 @@ def get_a_user(current_user, id):
         "is_admin": results[8],
         "joined": results[9],
         "email": results[4],
-                "imageUrl":results[3]
+        "imageUrl": results[3]
 
     }
     return jsonify(user_dict), 200
@@ -263,13 +276,34 @@ def logout(current_user):
 def verify_user():
     "verifies a users email"
     try:
-        user = jwt.decode(request.args.get('token'),
-                          'TRULYS_SECRET')
+        user = jwt.decode(request.args.get('token'), os.environ.get(
+            'TRULYS_SECRET', 'TRULYS_SECRET'))
         db.verify_user(user)
-        return redirect(os.environ.get('FRONT_END_URL','https://senditfrontend.herokuapp.com/login'), code=302)
+        return redirect(os.environ.get('FRONT_END_URL', ''), code=302)
 
     except jwt.InvalidSignatureError as identifier:
         return jsonify({"message": "verification is invalid or expired"}), 400
 
     except jwt.exceptions.DecodeError as e:
-        return jsonify({"message": "sorry the verification link is invalid"}), 400
+        return jsonify({"message": "Verification link is invalid"}), 400
+
+
+@auth.route('/api/v2/auth/reset_password/', methods=['POST'])
+def send_password_reset_link():
+    "sends a reset email to a user"
+    email = request.data.get("email", None)
+    if not email:
+        return jsonify({"message": "Please provide your email"}), 400
+    return jsonify({"email": email})
+
+    try:
+        user = jwt.decode(request.args.get('token'), os.environ.get(
+            'TRULYS_SECRET', 'TRULYS_SECRET'))
+        db.verify_user(user)
+        return redirect(os.environ.get('FRONT_END_URL', 'https://senditfrontend.herokuapp.com/login'), code=302)
+
+    except jwt.InvalidSignatureError as identifier:
+        return jsonify({"message": "verification is invalid or expired"}), 400
+
+    except jwt.exceptions.DecodeError as e:
+        return jsonify({"message": "Verification link is invalid"}), 400
