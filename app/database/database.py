@@ -32,11 +32,14 @@ class Database(object):
         self.cursor.execute(create_table)
         self.connection.commit()
         password = generate_password_hash('adminuser')
-        sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin,is_verified)
-                VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True) ON CONFLICT DO NOTHING""".format(
-            password)
-        self.cursor.execute(sql)
-        self.connection.commit()
+        try:
+            sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin,is_verified)
+                VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True)""".format(
+                password)
+            self.cursor.execute(sql)
+            self.connection.commit()
+        except Exception as identifier:
+            pass
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,
