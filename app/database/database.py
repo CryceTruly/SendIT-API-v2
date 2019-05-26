@@ -375,3 +375,10 @@ class Database(object):
             True, str(user['email']))
         self.cursor.execute(query)
         self.connection.commit()
+
+    def change_user_password(self, email, password):
+        password_hash = generate_password_hash(password)
+        query = "UPDATE users SET password = '{}' WHERE email = '{}';".format(
+            password_hash, email)
+        self.cursor.execute(query)
+        self.connection.commit()
