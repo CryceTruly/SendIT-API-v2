@@ -79,7 +79,7 @@ def create_user():
             '\nClick this link to verify your email\n' +
             '\n '+redirect_url
         }
-        send_mail(request, email, email_message)
+        send_mail(request, email_message, email)
 
         return response_message('Success',
                                 'Please visit your email to verify your account', 201)
@@ -344,7 +344,7 @@ def comfirmchange_password():
         if len(password) < 6:
             return response_message("Error", "Password is too short", 400)
         db.change_user_password(user['email'], password)
-        return response_message("success", "changed", 200)
+        return response_message("success", "password changed successfully", 200)
     except jwt.DecodeError as identifier:
         return response_message("Error", "link is invalid", 400)
     except jwt.ExpiredSignatureError as e:
