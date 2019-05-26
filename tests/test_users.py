@@ -245,7 +245,7 @@ class TestAuth(TestsStart):
         with self.app:
             res = self.login_user('admin@sendit.com', 'adminuser')
             data = json.loads(res.data.decode())
-            token = data['auth_token']
+            token = data['data']['auth_token']
             expectedreq = {
                 "recipient_name": "Aron Mike",
                 "parcel_description": "Here are my stuff",

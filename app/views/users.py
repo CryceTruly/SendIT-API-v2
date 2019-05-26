@@ -72,15 +72,14 @@ def create_user():
                 'Failed', username + ' is taken', 409)
         password = generate_password_hash(request_data['password'])
         db.insert_into_user(fullname, username, email, phone_number, password)
-
-        url = f"{request.url_root}api/v2/auth/email_verify?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
-
-        sendemail(
-            email, 'Welcome to SendIT',
-            'Hello there ' + fullname +
+        redirect_url = f"{request.url_root}api/v2/auth/email_verify?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
+        email_message = {
+            "subject": 'Welcome to SendIT',
+            "body": 'Hello there ' + fullname +
             '\nClick this link to verify your email\n' +
-            '\n '+url
-        )
+            '\n '+redirect_url
+        }
+        send_mail(request, email_message, email)
 
         return response_message('Success',
                                 'Please visit your email to verify your account', 201)
@@ -148,8 +147,15 @@ def login_user():
                 "imageUrl": results[3]
 
             }
-            return jsonify({"auth_token": token.decode('UTF-8'),
-                            "user": user_dict}), 200
+            response = {
+                "data": {
+                    "auth_token": token.decode('UTF-8'),
+                    "user": user_dict,
+                    "status": "success",
+                    "message": "successfully loged in"
+                }
+            }
+            return jsonify(response), 200
     except Exception as er:
         return response_message(
             'Failed', 'email or password is invalid', 400)
@@ -291,19 +297,64 @@ def verify_user():
 @auth.route('/api/v2/auth/reset_password/', methods=['POST'])
 def send_password_reset_link():
     "sends a reset email to a user"
-    email = request.data.get("email", None)
+    email = request.get_json().get("email", None)
     if not email:
         return jsonify({"message": "Please provide your email"}), 400
-    return jsonify({"email": email})
+
+    user = db.get_user_by_value("users", "email", email)
+    if not user:
+        return jsonify({"message": "There is no account associated with that email"}), 404
+    redirect_url = f"{request.url_root}api/v2/auth/password_change?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
+
+    email_message = {
+        "subject": "Password reset",
+        "body": f"Please click the link below to reset your password \n {redirect_url}"
+    }
+    send_mail(request, email_message, user[4])
+    return response_message("success", "Please check your email for reset instructions", 200)
 
     try:
         user = jwt.decode(request.args.get('token'), os.environ.get(
             'TRULYS_SECRET', 'TRULYS_SECRET'))
         db.verify_user(user)
-        return redirect(os.environ.get('FRONT_END_URL', 'https://senditfrontend.herokuapp.com/login'), code=302)
+        return redirect(os.environ.get("FRONT_END_URL", 'https://senditfrontend.herokuapp.com/login')+"login?status=verified", code=302)
 
     except jwt.InvalidSignatureError as identifier:
         return jsonify({"message": "verification is invalid or expired"}), 400
 
     except jwt.exceptions.DecodeError as e:
         return jsonify({"message": "Verification link is invalid"}), 400
+
+
+@auth.route("/api/v2/auth/password_change", methods=["GET"])
+def change_password():
+    token = request.args.get("token", "tamperedwith")
+    return redirect(os.environ.get("FRONT_END_URL")+"change_password?auth_token="+token)
+
+
+@auth.route("/api/v2/auth/password_change", methods=["POST"])
+def comfirmchange_password():
+    try:
+        token = request.get_json().get("token", None)
+        user = jwt.decode(token, os.environ.get(
+            'TRULYS_SECRET', 'TRULYS_SECRET'))
+        password = request.get_json().get("new_password", None)
+        if password is None:
+            return response_message("Error", "New password is required", 400)
+        if len(password) < 6:
+            return response_message("Error", "Password is too short", 400)
+        db.change_user_password(user['email'], password)
+        return response_message("success", "password changed successfully", 200)
+    except jwt.DecodeError as identifier:
+        return response_message("Error", "link is invalid", 400)
+    except jwt.ExpiredSignatureError as e:
+        return response_message(
+            "Error", "Reset Link is expired,Please request a new one", 400)
+
+
+def send_mail(request, email_message, email):
+    sendemail(
+        email,
+        email_message["subject"],
+        email_message["body"]
+    )

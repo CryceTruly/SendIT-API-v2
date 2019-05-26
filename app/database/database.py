@@ -9,7 +9,6 @@ class Database(object):
 
     def __init__(self):
         """initialize  connection """
-
         """
         creates a db
         """
@@ -32,16 +31,15 @@ class Database(object):
             is_admin BOOLEAN DEFAULT FALSE ,joined TIMESTAMPTZ DEFAULT Now())""".format(img)
         self.cursor.execute(create_table)
         self.connection.commit()
-
+        password = generate_password_hash('adminuser')
         try:
-            password = generate_password_hash('adminuser')
             sql = """INSERT INTO users(user_id,full_name,username,password,phone_number,email,is_admin,is_verified)
-                    VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True)""".format(
+                VALUES (100,'Admin User','senditadmin','{}','0700000000','admin@sendit.com',True,True)""".format(
                 password)
             self.cursor.execute(sql)
             self.connection.commit()
         except Exception as identifier:
-            print(identifier)
+            pass
 
         create_table = """ CREATE TABLE IF NOT EXISTS parcels(
             parcel_id SERIAL PRIMARY KEY,
@@ -375,5 +373,12 @@ class Database(object):
     def verify_user(self, user):
         query = "UPDATE users SET is_verified = {} WHERE email = '{}';".format(
             True, str(user['email']))
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def change_user_password(self, email, password):
+        password_hash = generate_password_hash(password)
+        query = "UPDATE users SET password = '{}' WHERE email = '{}';".format(
+            password_hash, email)
         self.cursor.execute(query)
         self.connection.commit()
