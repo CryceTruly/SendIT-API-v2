@@ -32,8 +32,7 @@ def token_required(f):
         try:
             database = Database()
             data = jwt.decode(get_token(),
-                              'TRULYS_SECRET')
-            print(data)
+                              os.environ.get('TRULYS_SECRET', 'TRULYS_SECRET'))
             query = database.get_user_by_value(
                 'users', 'user_id', data['user_id']
             )
