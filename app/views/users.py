@@ -338,7 +338,7 @@ def comfirmchange_password():
         token = request.get_json().get("token", None)
         user = jwt.decode(token, os.environ.get(
             'TRULYS_SECRET', 'TRULYS_SECRET'))
-        password = request.get_json().get("new_password", None)
+        password = request.get_json().get("password", None)
         if password is None:
             return response_message("Error", "New password is required", 400)
         if len(password) < 6:
