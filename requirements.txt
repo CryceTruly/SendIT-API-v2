@@ -1,4 +1,4 @@
-astroid==2.0.4
+astroid==2.2.5
 atomicwrites==1.2.1
 attrs==18.2.0
 autopep8==1.4.2
