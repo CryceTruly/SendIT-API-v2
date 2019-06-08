@@ -285,7 +285,7 @@ def verify_user():
         user = jwt.decode(request.args.get('token'), os.environ.get(
             'TRULYS_SECRET', 'TRULYS_SECRET'))
         db.verify_user(user)
-        return redirect(os.environ.get('FRONT_END_URL', ''), code=302)
+        return redirect(os.environ.get('FRONT_END_URL', '')+'login?message=success', code=302)
 
     except jwt.InvalidSignatureError as identifier:
         return jsonify({"message": "verification is invalid or expired"}), 400
@@ -304,26 +304,14 @@ def send_password_reset_link():
     user = db.get_user_by_value("users", "email", email)
     if not user:
         return jsonify({"message": "There is no account associated with that email"}), 404
-    redirect_url = f"{request.url_root}api/v2/auth/password_change?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
 
+    redirect_url = f"{request.url_root}api/v2/auth/password_change?token={jwt.encode({'email':email},os.environ.get('TRULYS_SECRET','TRULYS_SECRET')).decode('utf-8')}"
     email_message = {
         "subject": "Password reset",
         "body": f"Please click the link below to reset your password \n {redirect_url}"
     }
     send_mail(request, email_message, user[4])
     return response_message("success", "Please check your email for reset instructions", 200)
-
-    try:
-        user = jwt.decode(request.args.get('token'), os.environ.get(
-            'TRULYS_SECRET', 'TRULYS_SECRET'))
-        db.verify_user(user)
-        return redirect(os.environ.get("FRONT_END_URL", 'https://senditfrontend.herokuapp.com/login')+"login?status=verified", code=302)
-
-    except jwt.InvalidSignatureError as identifier:
-        return jsonify({"message": "verification is invalid or expired"}), 400
-
-    except jwt.exceptions.DecodeError as e:
-        return jsonify({"message": "Verification link is invalid"}), 400
 
 
 @auth.route("/api/v2/auth/password_change", methods=["GET"])
