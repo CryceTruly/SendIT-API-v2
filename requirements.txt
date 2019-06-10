@@ -43,7 +43,7 @@ PySocks==1.6.8
 pytest==3.10.0
 pytest-cov==2.7.1
 pytz==2018.7
-requests==2.20.1
+requests==2.22.0
 six==1.11.0
 twilio==6.19.2
 urllib3==1.24.1
