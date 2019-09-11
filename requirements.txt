@@ -33,7 +33,7 @@ mistune==0.8.4
 more-itertools==4.3.0
 nose2==0.8.0
 passlib==1.7.1
-pluggy==0.8.0
+pluggy==0.13.0
 psycopg2==2.7.6.1
 py==1.7.0
 pycodestyle==2.4.0
