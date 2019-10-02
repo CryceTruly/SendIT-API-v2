@@ -16,7 +16,7 @@ Flask==1.1.1
 Flask-Cors==3.0.8
 Flask-Mail==0.9.1
 Flask-Script==2.0.6
-flask-swagger-ui==3.18.0
+flask-swagger-ui==3.20.9
 Flask-Testing==0.7.1
 geographiclib==1.49
 geopy==1.20.0
