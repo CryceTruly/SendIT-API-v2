@@ -39,7 +39,7 @@ py==1.7.0
 pycodestyle==2.4.0
 PyJWT==1.6.4
 pylint==2.4.3
-PySocks==1.6.8
+PySocks==1.7.1
 pytest==5.2.0
 pytest-cov==2.7.1
 pytz==2018.7
