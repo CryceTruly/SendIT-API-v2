@@ -34,7 +34,7 @@ more-itertools==7.2.0
 nose2==0.8.0
 passlib==1.7.1
 pluggy==0.13.0
-psycopg2==2.7.6.1
+psycopg2==2.8.4
 py==1.7.0
 pycodestyle==2.4.0
 PyJWT==1.6.4
