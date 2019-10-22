@@ -44,7 +44,7 @@ pytest==5.2.0
 pytest-cov==2.7.1
 pytz==2018.7
 requests==2.22.0
-six==1.11.0
+six==1.12.0
 twilio==6.32.0
 urllib3==1.25.6
 validate-email==1.3
