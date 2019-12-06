@@ -187,11 +187,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:b044f07694ef14a6683b097ba56bd081dbc7cdc7c7fe46011e499dfecc082f21",
-                "sha256:e6ac600a142cf2db707b1998382cc7fc3b02befb7273876e01b8ad10b9652742"
+                "sha256:6e41b925839cad2e9808f037206e12291c1e61531c5cbc705056d3f11bcd13a6",
+                "sha256:d0931f65e871b6132ca30ec9d074e7edc46a270466f632db684c0f07a241847b"
             ],
             "markers": "python_version < '3.8'",
-            "version": "==1.1.0"
+            "version": "==1.1.2"
         },
         "itsdangerous": {
             "hashes": [
@@ -209,10 +209,10 @@
         },
         "jsonschema": {
             "hashes": [
-                "sha256:000e68abd33c972a5248544925a0cae7d1125f9bf6c58280d37546b946769a08",
-                "sha256:6ff5f3180870836cae40f06fa10419f557208175f13ad7bc26caa77beb1f6e02"
+                "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163",
+                "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"
             ],
-            "version": "==2.6.0"
+            "version": "==3.2.0"
         },
         "lazy-object-proxy": {
             "hashes": [
@@ -342,6 +342,12 @@
             ],
             "version": "==2.4.5"
         },
+        "pyrsistent": {
+            "hashes": [
+                "sha256:f3b280d030afb652f79d67c5586157c5c1355c9a58dfc7940566e28d28f3df1b"
+            ],
+            "version": "==0.15.6"
+        },
         "pytest": {
             "hashes": [
                 "sha256:63344a2e3bce2e4d522fd62b4fdebb647c019f1f9e4ca075debbd13219db4418",
@@ -398,10 +404,10 @@
         },
         "twilio": {
             "hashes": [
-                "sha256:668c71d17fa1f48137e883c73c6dc56f0c2afeaca5883ad8033384d8c8e6c793"
+                "sha256:da282a9c02bd9dfb190b798528b478833d8d28cb51464e8c45da0f0794384cde"
             ],
             "index": "pypi",
-            "version": "==6.33.1"
+            "version": "==6.34.0"
         },
         "typed-ast": {
             "hashes": [
