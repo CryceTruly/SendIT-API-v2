@@ -10,6 +10,9 @@ SendIT is a courier service app that helps users deliver parcels to different de
   - Python 3.7.1
   - Flask 1.0.2
   - PostgreSQL 11.0
+  - Celery
+  - RabbitMQ
+  
 
 
 #  Features!
